@@ -1,0 +1,51 @@
+#[cfg(not(test))]
+use crate::data::*;
+#[cfg(test)]
+use crate::test_data::*;
+
+use super::FitnessFunction;
+
+/**
+
+If each symbol has preferred locations in the chromosone, this may be expressed using the `WeightedCount` fitness score.   Every symbol has a weight for each position in the chromosone.   The weight is a very small positive integer indicating the desirability of the position.  The higher the weight, the more scores that increase when a symbol is placed in that position.
+
+*/
+pub struct WeightedCount {
+    pub max_weight: usize,
+    pub weights: [[usize; LENGTH]; NSYMS],
+}
+
+impl WeightedCount {
+    /// see [`WeightedCount`].   `max_weight` is the maximum value for a weight.   [`WeightedCount`] will return `max_weight` scores for each symbol, so you likely want to set `max_weight` to a small number, like 1 or 3.
+    pub fn new(max_weight: usize, weights: [[usize; LENGTH]; NSYMS]) -> WeightedCount {
+        WeightedCount {
+            max_weight,
+            weights,
+        }
+    }
+}
+
+impl FitnessFunction for WeightedCount {
+    fn run(&self, chromosone: &[usize; LENGTH]) -> Vec<f64> {
+        let mut scores: Vec<f64> = vec![0f64; NSYMS * self.max_weight];
+
+        for i in 0..LENGTH {
+            for w in 0..self.weights[chromosone[i]][i] {
+                scores[chromosone[i] * self.max_weight + w] += 1.0;
+            }
+        }
+
+        scores
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_weighted() {
+        let wc = WeightedCount::new(2, [[2, 2, 1, 1, 0], [1, 1, 2, 2, 0], [2, 2, 2, 2, 2]]);
+        let scores = wc.run(&[0, 0, 0, 1, 1]);
+        assert_eq!(scores, vec![3.0, 2.0, 1.0, 1.0, 0.0, 0.0]);
+    }
+}

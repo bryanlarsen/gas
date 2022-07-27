@@ -1,34 +1,34 @@
+use crate::constraints::constraint_violations;
 #[cfg(not(test))]
 use crate::data::*;
 #[cfg(test)]
 use crate::test_data::*;
 
+use crate::config::Configuration;
 use crate::fitness::*;
 use crate::rando::*;
+
+#[cfg(test)]
+use mockall::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Candidate {
     pub chromosone: [usize; LENGTH],
     pub scores: [f64; NSCORES],
+    pub violations: usize,
 }
 
 impl Candidate {
-    pub fn from_chromosone(
-        chromosone: [usize; LENGTH],
-        score_config: &[Box<dyn FitnessFunction>],
-    ) -> Candidate {
+    pub fn from_chromosone(chromosone: [usize; LENGTH], config: &Configuration) -> Candidate {
         Candidate {
             chromosone,
-            scores: scores(&chromosone, score_config),
+            scores: scores(&chromosone, &config.fitness),
+            violations: constraint_violations(&chromosone, &config.constraint),
         }
     }
 
-    pub fn new(score_config: &[Box<dyn FitnessFunction>], rng: &mut dyn Rando) -> Candidate {
-        let chromosone: [usize; LENGTH] = array_init::array_init(|_| rng.gen_range(0..NSYMS));
-        Candidate {
-            chromosone,
-            scores: scores(&chromosone, score_config),
-        }
+    pub fn new(config: &Configuration, rng: &mut dyn Rando) -> Candidate {
+        Candidate::from_chromosone(array_init::array_init(|_| rng.gen_range(0..NSYMS)), config)
     }
 
     /// calculate an aggregate score.  The system doesn't use this internally, but it can be used for a very rough comparison between candidates.
@@ -45,29 +45,35 @@ impl Candidate {
             "left {:?} right {:?}",
             left, right
         );
+        assert_eq!(
+            left.violations, right.violations,
+            "left {:?} right {:?}",
+            left, right
+        );
         assert_scores_eq(&left.scores, &right.scores);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use super::*;
 
     #[test]
     fn test_candidate() {
-        let (_, config) = configuration();
+        let config = configuration();
         Candidate::assert_eq(
             &Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
             &Candidate {
                 chromosone: [0, 0, 1, 0, 1],
                 scores: [1.0, 1.5, 2.0, 2.0, f64::NAN, f64::NAN],
+                violations: 0,
             },
         );
     }
 
     #[test]
     fn test_new() {
-        let (_, config) = configuration();
+        let config = configuration();
         let mut r = MockRando::new();
         r.expect_gen_range()
             .with(predicate::eq(0..NSYMS))
@@ -78,6 +84,7 @@ mod tests {
             &Candidate {
                 chromosone: [2, 2, 2, 2, 2],
                 scores: [f64::NAN, f64::NAN, f64::NAN, f64::NAN, 1.0, 1.0],
+                violations: 0,
             },
         );
     }

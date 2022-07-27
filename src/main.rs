@@ -15,6 +15,7 @@ Every generation is created from the previous generation based on the configurat
 TBD: individuals that win more than one tournament.
 
  */
+
 #[cfg(not(test))]
 mod data;
 #[cfg(not(test))]
@@ -24,11 +25,10 @@ use crate::data::*;
 
 #[cfg(test)]
 mod test_data;
-#[cfg(test)]
-use crate::test_data::*;
 
 mod candidate;
 mod config;
+mod constraints;
 mod fitness;
 mod game;
 mod generation;
@@ -37,58 +37,57 @@ mod repopulate;
 mod reproduction;
 mod tournaments;
 
-use candidate::*;
-#[cfg(not(test))]
-use generation::*;
-use rando::*;
-
-#[cfg(test)]
-use game::*;
-
-#[cfg(test)]
-use mockall::*;
-
-#[cfg(not(test))]
-use std::env;
-
 #[cfg(not(test))]
 fn main() {
+    use candidate::Candidate;
+    use rando::RealRando;
+
+    use std::env;
+    use std::time::Instant;
+
     let args: Vec<String> = env::args().collect();
     let mut iterations: usize = 100;
     if args.len() > 1 {
         iterations = args[1].parse().unwrap();
     }
-    let mut population = Vec::<Candidate>::with_capacity(40);
+    let mut population = Vec::<Candidate>::with_capacity(POPSIZE);
     let mut rng = RealRando::new();
-    let (config, score_config) = configuration();
+    let config = configuration();
 
     for _ in 0..POPSIZE {
-        population.push(Candidate::new(&score_config, &mut rng));
+        population.push(Candidate::new(&config, &mut rng));
     }
 
-    for _ in 0..iterations {
-        population = generation(&population, &config, &score_config, &mut rng);
-        eprintln!("{}", population[0].total_score());
+    let start = Instant::now();
+
+    for i in 0..iterations {
+        population = generation::generation(&population, &config, &mut rng);
+        if i % 10 == 0 {
+            eprintln!(
+                "{i} {} {}",
+                population[0].violations,
+                population[0].total_score()
+            );
+        }
     }
 
-    eprintln!(
-        "{:?} {:?} {}",
-        population[0].chromosone,
-        population[0].scores,
-        population[0].total_score()
-    );
-
-    print!("{{");
+    println!("{{\"elapsed_ms\": {},", start.elapsed().as_millis());
+    print!("  \"results\":{{");
     for i in 0..LENGTH - 1 {
         print!(
-            "{}: {}, ",
+            "\"{}\": {}, ",
             schedule_data::POSITION_NAMES[i],
             schedule_data::SYMBOL_NAMES[population[0].chromosone[i]]
         );
     }
     println!(
-        "{}: {} }}",
+        "\"{}\": {} }},",
         schedule_data::POSITION_NAMES[LENGTH - 1],
         schedule_data::SYMBOL_NAMES[population[0].chromosone[LENGTH - 1]]
     );
+    println!(
+        "  \"violations\":{}, \"score\":{}}}",
+        population[0].violations,
+        population[0].total_score()
+    )
 }

@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+set -x
+
+template() {
+    cat <<EOF > src/data.rs
 use crate::config::*;
 use crate::constraints::*;
 use crate::fitness::*;
@@ -13,8 +20,8 @@ pub const LENGTH: usize = schedule_data::LENGTH;
 pub const NCOLORS: usize = schedule_data::NCOLORS;
 pub const MAX_WEIGHT: usize = schedule_data::MAX_WEIGHT;
 
-pub const POPSIZE: usize = 60;
-pub const TRIES_PER_GAME: std::ops::Range<usize> = 125..500;
+pub const POPSIZE: usize = ${POPSIZE};
+pub const TRIES_PER_GAME: std::ops::Range<usize> = ${TRIES_PER_GAME_MIN}..${TRIES_PER_GAME_MAX};
 pub const NSCORES: usize = /* distance */
     NSYMS * 2 + /* color */ NCOLORS * NSYMS + /* weighted */ MAX_WEIGHT * NSYMS;
 
@@ -23,7 +30,7 @@ pub fn configuration() -> Configuration {
     let config = Configuration {
         generation: vec![
             GenerationConfig {
-                n: 30,
+                n: ${SINGLE_ELIMINATION},
                 propagation: Propagation::Tournament(Box::new(
                     single_elimination::SingleElimination::new(Box::new(
                         game::sample::Sample::new(TRIES_PER_GAME),
@@ -31,8 +38,8 @@ pub fn configuration() -> Configuration {
                 )),
             },
             GenerationConfig {
-                n: 30,
-                propagation: Propagation::Mutation(Box::new(mutate::Mutate::new(1..2))),
+                n: ${MUTATION},
+                propagation: Propagation::Mutation(Box::new(mutate::Mutate1::new())),
             },
         ],
         fitness: vec![
@@ -51,10 +58,42 @@ pub fn configuration() -> Configuration {
         ))],
     };
 
-    assert_eq!(
-        config.generation.iter().fold(0, |sum, c| sum + c.n),
-        POPSIZE
-    );
+    assert_eq!(config.generation.iter().fold(0, |sum, c| sum + c.n), POPSIZE);
 
     config
 }
+
+EOF
+}
+
+sample () {
+    template
+    cargo build
+    for i in $(seq ${N}) ; do
+        iteration
+    done
+}
+
+iteration () {
+    local json=$(cargo run -- ${ITERATIONS})
+    ELAPSED_MS=$(jq .elapsed_ms <<< ${json})
+    VIOLATIONS=$(jq .violations <<< ${json})
+    SCORE=$(jq .score <<< ${json})
+
+    echo ${SCORE},${VIOLATIONS},${ELAPSED_MS},${ITERATIONS},${POPSIZE},${SINGLE_ELIMINATION},${MUTATION},${TRIES_PER_GAME_MIN},${TRIES_PER_GAME_MAX} | tee >> results.csv
+}
+
+main () {
+    POPSIZE=60
+    SINGLE_ELIMINATION=30
+    MUTATION=30
+    TRIES_PER_GAME_MIN=125
+    TRIES_PER_GAME_MAX=500
+    N=10
+    for iter in 100 1000 2000 3000 5000 25000 100000 ; do
+        ITERATIONS=${iter}
+        sample
+    done
+}
+
+main "$@"

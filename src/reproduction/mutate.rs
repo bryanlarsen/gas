@@ -3,39 +3,40 @@ use crate::data::*;
 #[cfg(test)]
 use crate::test_data::*;
 
-use crate::candidate::*;
-use crate::fitness::FitnessFunction;
+use crate::candidate::Candidate;
+use crate::config::Configuration;
 use crate::rando::*;
-use crate::reproduction::*;
+use crate::reproduction::Mutation;
 
 #[cfg(test)]
 use mockall::*;
 
-pub struct Mutate1 {}
+pub struct Mutate {
+    pub n: usize,
+}
 
-impl Mutate1 {
-    pub fn new() -> Mutate1 {
-        Mutate1 {}
+impl Mutate {
+    pub fn new(n: usize) -> Mutate {
+        Mutate { n }
     }
 }
 
-impl Mutation for Mutate1 {
-    //pub fn run(chromosone: &[usize; LENGTH], rng: &mut dyn Rando) -> [usize; LENGTH] {
-    fn run(
-        &self,
-        candidate: &Candidate,
-        score_config: &[Box<dyn FitnessFunction>],
-        rng: &mut dyn Rando,
-    ) -> Candidate {
-        let pos = rng.gen_range(0..LENGTH);
-        let mut new = rng.gen_range(0..NSYMS);
-        while new == candidate.chromosone[pos] {
-            new = rng.gen_range(0..NSYMS);
-        }
+impl Mutation for Mutate {
+    fn run(&self, candidate: &Candidate, config: &Configuration, rng: &mut dyn Rando) -> Candidate {
         let mut mutated = [0usize; LENGTH];
         mutated.copy_from_slice(&candidate.chromosone);
-        mutated[pos] = new;
-        Candidate::from_chromosone(mutated, score_config)
+        for _ in 0..self.n {
+            let pos = rng.gen_range(0..LENGTH);
+            let mut new;
+            loop {
+                new = rng.gen_range(0..NSYMS);
+                if new != candidate.chromosone[pos] {
+                    break;
+                }
+            }
+            mutated[pos] = new;
+        }
+        Candidate::from_chromosone(mutated, config)
     }
 }
 
@@ -44,10 +45,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_mutate1() {
-        let (_, config) = configuration();
+    fn test_mutate() {
+        let config = configuration();
         let mut r = MockRando::new();
-        let m = Mutate1::new();
+        let m = Mutate::new(1);
         r.expect_gen_range()
             .with(predicate::eq(0..LENGTH))
             .times(1)

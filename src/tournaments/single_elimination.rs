@@ -4,19 +4,24 @@ use crate::test_data::*;
 use std::collections::VecDeque;
 
 use crate::candidate::*;
-use crate::game::*;
-use crate::rando::*;
+use crate::game::{self, Game};
+use crate::rando::Rando;
 use crate::tournaments::*;
 
-pub struct SingleElimination {}
+#[cfg(test)]
+use crate::rando::RealRando;
 
-impl SingleElimination {
-    pub fn new() -> SingleElimination {
-        SingleElimination {}
+pub struct SingleElimination<G: Game> {
+    pub game: G,
+}
+
+impl<G: Game> SingleElimination<G> {
+    pub fn new(game: G) -> SingleElimination<G> {
+        SingleElimination { game }
     }
 }
 
-impl Tournament for SingleElimination {
+impl<G: Game> Tournament for SingleElimination<G> {
     fn run(&self, population: &Vec<Candidate>, rng: &mut dyn Rando) -> Vec<usize> {
         let mut remaining: VecDeque<usize> = VecDeque::with_capacity(population.len());
         let mut losers: Vec<usize> = Vec::with_capacity(population.len());
@@ -29,13 +34,12 @@ impl Tournament for SingleElimination {
         while remaining.len() >= 2 {
             let left = remaining.pop_front().unwrap();
             let right = remaining.pop_front().unwrap();
-
-            match game(&population[left].scores, &population[right].scores, rng) {
-                LeftRight::Left => {
+            match self.game.run(&population[left], &population[right], rng) {
+                game::LeftRight::Left => {
                     remaining.push_back(left);
                     losers.push(right);
                 }
-                LeftRight::Right => {
+                game::LeftRight::Right => {
                     remaining.push_back(right);
                     losers.push(left);
                 }
@@ -56,14 +60,15 @@ mod tests {
 
     #[test]
     fn test_single_elimination_tournament() {
-        let (_, config) = configuration();
+        let config = configuration();
         let mut r = RealRando::new();
-        let t = SingleElimination::new();
+        let g = game::sample::Sample::new(TRIES_PER_GAME);
+        let t = SingleElimination::new(g);
         assert_eq!(
             t.run(
                 &vec![
                     Candidate::from_chromosone([1, 0, 1, 0, 1], &config),
-                    Candidate::from_chromosone([0, 0, 1, 0, 1], &config)
+                    Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
                 ],
                 &mut r
             ),

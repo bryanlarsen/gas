@@ -1,5 +1,6 @@
 use crate::config::*;
 use crate::fitness::*;
+use crate::game;
 use crate::reproduction::*;
 use crate::tournaments::*;
 
@@ -11,20 +12,23 @@ pub const POPSIZE: usize = 2;
 pub const NCOLORS: usize = 2;
 
 /// the configuration for the creation of a generation.   The sum of "n" must add up to POPSIZE.
-pub fn configuration() -> ([ConfigLine; 2], [Box<dyn FitnessFunction>; 1]) {
-    (
-        [
-            ConfigLine {
+pub fn configuration() -> Configuration {
+    Configuration {
+        generation: vec![
+            GenerationConfig {
                 n: 1,
                 propagation: Propagation::Tournament(Box::new(
-                    single_elimination::SingleElimination::new(),
+                    single_elimination::SingleElimination::new(game::sample::Sample::new(
+                        TRIES_PER_GAME,
+                    )),
                 )),
             },
-            ConfigLine {
+            GenerationConfig {
                 n: 1,
-                propagation: Propagation::Mutation(Box::new(mutate::Mutate1::new())),
+                propagation: Propagation::Mutation(Box::new(mutate::Mutate::new(1))),
             },
         ],
-        [Box::new(distance::Distance::new(7))],
-    )
+        fitness: vec![Box::new(distance::Distance::new(7))],
+        constraint: vec![],
+    }
 }

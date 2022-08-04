@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 array-init = "2.0.1"
+mockall_double = "0.3.0"
 rand = "0.8.5"
 
 [dev-dependencies]

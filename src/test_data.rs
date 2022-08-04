@@ -30,5 +30,6 @@ pub fn configuration() -> Configuration {
         ],
         fitness: vec![Box::new(distance::Distance::new(7))],
         constraint: vec![],
+        iteration: 0,
     }
 }

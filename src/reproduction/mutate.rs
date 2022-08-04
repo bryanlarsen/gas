@@ -5,8 +5,10 @@ use crate::test_data::*;
 
 use crate::candidate::Candidate;
 use crate::config::Configuration;
-use crate::rando::*;
 use crate::reproduction::Mutation;
+
+#[mockall_double::double]
+use crate::rando::Rando;
 
 #[cfg(test)]
 use mockall::*;
@@ -22,7 +24,7 @@ impl Mutate {
 }
 
 impl Mutation for Mutate {
-    fn run(&self, candidate: &Candidate, config: &Configuration, rng: &mut dyn Rando) -> Candidate {
+    fn run(&self, candidate: &Candidate, config: &Configuration, rng: &mut Rando) -> Candidate {
         let mut mutated = [0usize; LENGTH];
         mutated.copy_from_slice(&candidate.chromosone);
         for _ in 0..self.n {
@@ -47,7 +49,7 @@ mod tests {
     #[test]
     fn test_mutate() {
         let config = configuration();
-        let mut r = MockRando::new();
+        let mut r = Rando::default();
         let m = Mutate::new(1);
         r.expect_gen_range()
             .with(predicate::eq(0..LENGTH))

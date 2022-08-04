@@ -5,9 +5,10 @@ use crate::test_data::*;
 use mockall::*;
 
 use crate::candidate::Candidate;
-use crate::rando::*;
-
 use crate::game::*;
+
+#[mockall_double::double]
+use crate::rando::Rando;
 
 pub struct Sample {
     pub tries_per_game: std::ops::Range<usize>,
@@ -26,7 +27,7 @@ impl Sample {
 }
 
 impl Game for Sample {
-    fn run(&self, left: &Candidate, right: &Candidate, rng: &mut dyn Rando) -> LeftRight {
+    fn run(&self, left: &Candidate, right: &Candidate, rng: &mut Rando) -> LeftRight {
         if left.violations < right.violations {
             return LeftRight::Left;
         } else if left.violations > right.violations {
@@ -64,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_game() {
-        let mut r = MockRando::new();
+        let mut r = Rando::default();
         r.expect_gen_range()
             .with(predicate::eq(TRIES_PER_GAME))
             .times(1)
@@ -80,12 +81,14 @@ mod tests {
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0],
-                    violations: 0
+                    violations: 0,
+                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0],
-                    violations: 0
+                    violations: 0,
+                    iteration: 0,
                 },
                 &mut r
             )
@@ -94,7 +97,7 @@ mod tests {
 
     #[test]
     fn test_game_violations() {
-        let mut r = MockRando::new();
+        let mut r = Rando::default();
         let g = Sample::new(TRIES_PER_GAME);
         assert_eq!(
             LeftRight::Right,
@@ -102,12 +105,14 @@ mod tests {
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0],
-                    violations: 2
+                    violations: 2,
+                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0],
-                    violations: 1
+                    violations: 1,
+                    iteration: 0,
                 },
                 &mut r
             )
@@ -116,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_game_tied() {
-        let mut r = MockRando::new();
+        let mut r = Rando::default();
         r.expect_gen_range()
             .with(predicate::eq(TRIES_PER_GAME))
             .times(1)
@@ -132,12 +137,14 @@ mod tests {
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    violations: 0
+                    violations: 0,
+                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    violations: 0
+                    violations: 0,
+                    iteration: 0,
                 },
                 &mut r
             )

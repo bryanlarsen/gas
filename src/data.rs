@@ -1,9 +1,9 @@
 use crate::config::*;
-use crate::constraints::*;
-use crate::fitness::*;
+use crate::constraints;
+use crate::fitness;
 use crate::game;
-use crate::reproduction::*;
-use crate::tournaments::*;
+use crate::reproduction;
+use crate::tournaments;
 
 use crate::schedule_data;
 
@@ -13,7 +13,7 @@ pub const LENGTH: usize = schedule_data::LENGTH;
 pub const NCOLORS: usize = schedule_data::NCOLORS;
 pub const MAX_WEIGHT: usize = schedule_data::MAX_WEIGHT;
 
-pub const POPSIZE: usize = 60;
+pub const POPSIZE: usize = 1000;
 pub const TRIES_PER_GAME: std::ops::Range<usize> = 125..500;
 pub const NSCORES: usize = /* distance */
     NSYMS * 2 + /* color */ NCOLORS * NSYMS + /* weighted */ MAX_WEIGHT * NSYMS;
@@ -23,32 +23,61 @@ pub fn configuration() -> Configuration {
     let config = Configuration {
         generation: vec![
             GenerationConfig {
-                n: 30,
+                n: 500,
                 propagation: Propagation::Tournament(Box::new(
-                    single_elimination::SingleElimination::new(Box::new(
+                    tournaments::single_elimination::SingleElimination::new(
                         game::sample::Sample::new(TRIES_PER_GAME),
-                    )),
+                    ),
                 )),
             },
             GenerationConfig {
-                n: 30,
-                propagation: Propagation::Mutation(Box::new(mutate::Mutate::new(1..2))),
+                n: 100,
+                propagation: Propagation::Crossover(Box::new(reproduction::splice::Splice::new())),
+            },
+            GenerationConfig {
+                n: 100,
+                propagation: Propagation::Crossover(Box::new(reproduction::mix::Mix::new())),
+            },
+            GenerationConfig {
+                n: 50,
+                propagation: Propagation::Mutation(Box::new(reproduction::mutate::Mutate::new(1))),
+            },
+            GenerationConfig {
+                n: 50,
+                propagation: Propagation::Mutation(Box::new(reproduction::mutate::Mutate::new(2))),
+            },
+            GenerationConfig {
+                n: 50,
+                propagation: Propagation::Mutation(Box::new(reproduction::mutate::Mutate::new(3))),
+            },
+            GenerationConfig {
+                n: 50,
+                propagation: Propagation::Mutation(Box::new(reproduction::rotate::Rotate::new(1))),
+            },
+            GenerationConfig {
+                n: 50,
+                propagation: Propagation::Mutation(Box::new(reproduction::rotate::Rotate::new(2))),
+            },
+            GenerationConfig {
+                n: 50,
+                propagation: Propagation::Mutation(Box::new(reproduction::rotate::Rotate::new(3))),
             },
         ],
         fitness: vec![
-            Box::new(distance::Distance::new(7)),
-            Box::new(color_count::ColorCount::new(
+            Box::new(fitness::distance::Distance::new(7)),
+            Box::new(fitness::color_count::ColorCount::new(
                 schedule_data::CHROMOSONE_COLORS,
                 schedule_data::COLOR_PREFS,
             )),
-            Box::new(weighted_count::WeightedCount::new(
+            Box::new(fitness::weighted_count::WeightedCount::new(
                 schedule_data::MAX_WEIGHT,
                 schedule_data::WEIGHTS,
             )),
         ],
-        constraint: vec![Box::new(invalid_position::InvalidPosition::new(
-            schedule_data::INVALID_POSITIONS,
-        ))],
+        constraint: vec![Box::new(
+            constraints::invalid_position::InvalidPosition::new(schedule_data::INVALID_POSITIONS),
+        )],
+        iteration: 0,
     };
 
     assert_eq!(

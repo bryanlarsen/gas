@@ -3,66 +3,85 @@
 This module wraps some of the standard rand::* functions in a trait so that they can be mocked for testing.
 
  */
+
 #[cfg(test)]
 use mockall::*;
 
-#[cfg(test)]
-use crate::test_data::*;
-
-#[cfg(not(test))]
-use crate::data::*;
-
 use rand::prelude::*;
 
-#[cfg_attr(test, automock)]
-pub trait Rando {
-    fn shuffle(&mut self, s: &mut [usize]);
-    fn gen_range(&mut self, range: std::ops::Range<usize>) -> usize;
-    /// gen_range(0..LENGTH)
-    fn gen_length(&mut self) -> usize;
-    fn init_weighted(&mut self, weights: &[usize]);
-    fn gen_weighted(&mut self) -> usize;
-}
-
-pub struct RealRando {
+pub struct Rando {
     pub rng: ThreadRng,
     pub weighted_distribution: Option<Box<rand::distributions::WeightedIndex<usize>>>,
-    pub uniform_length: rand::distributions::Uniform<usize>,
 }
 
-impl RealRando {
-    pub fn new() -> RealRando {
-        RealRando {
-            rng: thread_rng(),
-            weighted_distribution: None,
-            uniform_length: rand::distributions::Uniform::from(0..LENGTH),
+#[cfg(not(test))]
+pub struct RandoIter {
+    pub iter: rand::distributions::DistIter<rand::distributions::Uniform<usize>, ThreadRng, usize>,
+}
+
+#[cfg(test)]
+pub struct RandoIter {
+    pub iter: std::iter::Cloned<std::slice::Iter<'static, usize>>,
+}
+
+// #[cfg(test)]
+// impl Iterator for RandoIter {
+//     type Item = usize;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         match self.iter.next() {
+//             Some(u) => Some(*u),
+//             None => None,
+//         }
+//     }
+// }
+
+impl Iterator for RandoIter {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
+}
+
+#[cfg(test)]
+impl RandoIter {
+    pub fn mock(slice: &'static [usize]) -> Self {
+        Self {
+            iter: slice.iter().cloned(),
         }
     }
 }
 
-impl Rando for RealRando {
-    fn shuffle(&mut self, s: &mut [usize]) {
+#[cfg_attr(test, automock)]
+#[cfg_attr(test, allow(dead_code))]
+impl Rando {
+    pub fn new() -> Self {
+        Self {
+            rng: ThreadRng::default(),
+            weighted_distribution: None,
+        }
+    }
+
+    pub fn shuffle(&mut self, s: &mut [usize]) {
         s.shuffle(&mut self.rng)
     }
 
-    fn gen_range(&mut self, range: std::ops::Range<usize>) -> usize {
+    pub fn gen_range(&mut self, range: std::ops::Range<usize>) -> usize {
         self.rng.gen_range(range)
     }
 
-    fn gen_length(&mut self) -> usize {
-        self.uniform_length.sample(&mut self.rng)
+    #[cfg(not(test))]
+    pub fn uniform_iter(&self, range: std::ops::Range<usize>) -> RandoIter {
+        RandoIter {
+            iter: rand::distributions::Uniform::from(range).sample_iter(self.rng.clone()),
+        }
     }
 
-    fn init_weighted(&mut self, weights: &[usize]) {
-        self.weighted_distribution = Some(Box::new(
-            rand::distributions::WeightedIndex::new(weights).unwrap(),
-        ));
-    }
-
-    fn gen_weighted(&mut self) -> usize {
-        self.weighted_distribution
-            .as_ref()
-            .unwrap()
-            .sample(&mut self.rng)
+    #[cfg(test)]
+    pub fn uniform_iter(&self, _range: std::ops::Range<usize>) -> RandoIter {
+        RandoIter {
+            iter: [0usize].iter().cloned(),
+        }
     }
 }

@@ -5,12 +5,13 @@ set -x
 
 template() {
     cat <<EOF > src/data.rs
+
 use crate::config::*;
-use crate::constraints::*;
-use crate::fitness::*;
+use crate::constraints;
+use crate::fitness;
 use crate::game;
-use crate::reproduction::*;
-use crate::tournaments::*;
+use crate::reproduction;
+use crate::tournaments;
 
 use crate::schedule_data;
 
@@ -32,33 +33,65 @@ pub fn configuration() -> Configuration {
             GenerationConfig {
                 n: ${SINGLE_ELIMINATION},
                 propagation: Propagation::Tournament(Box::new(
-                    single_elimination::SingleElimination::new(Box::new(
+                    tournaments::single_elimination::SingleElimination::new(
                         game::sample::Sample::new(TRIES_PER_GAME),
-                    )),
+                    ),
                 )),
             },
             GenerationConfig {
-                n: ${MUTATION},
-                propagation: Propagation::Mutation(Box::new(mutate::Mutate1::new())),
+                n: $SPLICE,
+                propagation: Propagation::Crossover(Box::new(reproduction::splice::Splice::new())),
+            },
+            GenerationConfig {
+                n: $MIX,
+                propagation: Propagation::Crossover(Box::new(reproduction::mix::Mix::new())),
+            },
+            GenerationConfig {
+                n: $MUTATION1,
+                propagation: Propagation::Mutation(Box::new(reproduction::mutate::Mutate::new(1))),
+            },
+            GenerationConfig {
+                n: $MUTATION2,
+                propagation: Propagation::Mutation(Box::new(reproduction::mutate::Mutate::new(2))),
+            },
+            GenerationConfig {
+                n: $MUTATION3,
+                propagation: Propagation::Mutation(Box::new(reproduction::mutate::Mutate::new(3))),
+            },
+            GenerationConfig {
+                n: $ROTATE1,
+                propagation: Propagation::Mutation(Box::new(reproduction::rotate::Rotate::new(1))),
+            },
+            GenerationConfig {
+                n: $ROTATE2,
+                propagation: Propagation::Mutation(Box::new(reproduction::rotate::Rotate::new(2))),
+            },
+            GenerationConfig {
+                n: $ROTATE3,
+                propagation: Propagation::Mutation(Box::new(reproduction::rotate::Rotate::new(3))),
             },
         ],
         fitness: vec![
-            Box::new(distance::Distance::new(7)),
-            Box::new(color_count::ColorCount::new(
+            Box::new(fitness::distance::Distance::new(7)),
+            Box::new(fitness::color_count::ColorCount::new(
                 schedule_data::CHROMOSONE_COLORS,
                 schedule_data::COLOR_PREFS,
             )),
-            Box::new(weighted_count::WeightedCount::new(
+            Box::new(fitness::weighted_count::WeightedCount::new(
                 schedule_data::MAX_WEIGHT,
                 schedule_data::WEIGHTS,
             )),
         ],
-        constraint: vec![Box::new(invalid_position::InvalidPosition::new(
-            schedule_data::INVALID_POSITIONS,
-        ))],
+        constraint: vec![Box::new(
+            constraints::invalid_position::InvalidPosition::new(schedule_data::INVALID_POSITIONS),
+        )],
+        iteration: 0,
     };
 
-    assert_eq!(config.generation.iter().fold(0, |sum, c| sum + c.n), POPSIZE);
+    assert_eq!(
+        config.generation.iter().fold(0, |sum, c| sum + c.n),
+        POPSIZE
+    );
 
     config
 }
@@ -79,20 +112,31 @@ iteration () {
     ELAPSED_MS=$(jq .elapsed_ms <<< ${json})
     VIOLATIONS=$(jq .violations <<< ${json})
     SCORE=$(jq .score <<< ${json})
+    ITERATION=$(jq .iteration <<< ${json})
+    AVERAGE_ITERATION=$(jq .average_iteration <<< ${json})
 
-    echo ${SCORE},${VIOLATIONS},${ELAPSED_MS},${ITERATIONS},${POPSIZE},${SINGLE_ELIMINATION},${MUTATION},${TRIES_PER_GAME_MIN},${TRIES_PER_GAME_MAX} | tee >> results.csv
+    echo ${SCORE},${VIOLATIONS},${ELAPSED_MS},${ITERATIONS},${POPSIZE},${SINGLE_ELIMINATION},${MUTATION1},${TRIES_PER_GAME_MIN},${TRIES_PER_GAME_MAX},${MUTATION2},${MUTATION3},${ROTATE1},${ROTATE2},${ROTATE3},${SPLICE},${MIX},${ITERATION},${AVERAGE_ITERATION} | tee >> results.csv
 }
 
 main () {
-    POPSIZE=60
-    SINGLE_ELIMINATION=30
-    MUTATION=30
     TRIES_PER_GAME_MIN=125
     TRIES_PER_GAME_MAX=500
-    N=10
-    for iter in 100 1000 2000 3000 5000 25000 100000 ; do
-        ITERATIONS=${iter}
+    N=1
+    for i in $(seq 6) ; do
+    for pop in 60 100 200 500 1000 ; do
+        POPSIZE=${pop}
+        ITERATIONS=$((2000000 / pop))
+        SINGLE_ELIMINATION=$((pop / 2))
+        MUTATION1=$((pop / 20))
+        MUTATION2=$((pop / 20))
+        MUTATION3=$((pop / 20))
+        ROTATE1=$((pop / 20))
+        ROTATE2=$((pop / 20))
+        ROTATE3=$((pop / 20))
+        SPLICE=$((pop / 10))
+        MIX=$((pop / 10))
         sample
+    done
     done
 }
 

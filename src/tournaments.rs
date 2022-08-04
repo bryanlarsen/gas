@@ -1,6 +1,8 @@
 pub mod single_elimination;
 
 use crate::candidate::*;
+
+#[mockall_double::double]
 use crate::rando::Rando;
 
 /** a tournament sorts candidates, with "better" candidates toward the end of
@@ -8,5 +10,5 @@ use crate::rando::Rando;
  * population vector.
  */
 pub trait Tournament {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut dyn Rando) -> Vec<usize>;
+    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> Vec<usize>;
 }

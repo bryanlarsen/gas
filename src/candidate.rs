@@ -6,16 +6,19 @@ use crate::test_data::*;
 
 use crate::config::Configuration;
 use crate::fitness::*;
-use crate::rando::*;
 
 #[cfg(test)]
 use mockall::*;
+
+#[cfg_attr(test, mockall_double::double)]
+use crate::rando::Rando;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Candidate {
     pub chromosone: [usize; LENGTH],
     pub scores: [f64; NSCORES],
     pub violations: usize,
+    pub iteration: usize,
 }
 
 impl Candidate {
@@ -24,10 +27,11 @@ impl Candidate {
             chromosone,
             scores: scores(&chromosone, &config.fitness),
             violations: constraint_violations(&chromosone, &config.constraint),
+            iteration: config.iteration,
         }
     }
 
-    pub fn new(config: &Configuration, rng: &mut dyn Rando) -> Candidate {
+    pub fn new(config: &Configuration, rng: &mut Rando) -> Candidate {
         Candidate::from_chromosone(array_init::array_init(|_| rng.gen_range(0..NSYMS)), config)
     }
 
@@ -67,6 +71,7 @@ mod tests {
                 chromosone: [0, 0, 1, 0, 1],
                 scores: [1.0, 1.5, 2.0, 2.0, f64::NAN, f64::NAN],
                 violations: 0,
+                iteration: 0,
             },
         );
     }
@@ -74,7 +79,7 @@ mod tests {
     #[test]
     fn test_new() {
         let config = configuration();
-        let mut r = MockRando::new();
+        let mut r = Rando::default();
         r.expect_gen_range()
             .with(predicate::eq(0..NSYMS))
             .times(LENGTH)
@@ -85,6 +90,7 @@ mod tests {
                 chromosone: [2, 2, 2, 2, 2],
                 scores: [f64::NAN, f64::NAN, f64::NAN, f64::NAN, 1.0, 1.0],
                 violations: 0,
+                iteration: 0,
             },
         );
     }

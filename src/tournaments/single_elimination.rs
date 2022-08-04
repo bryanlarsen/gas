@@ -5,11 +5,10 @@ use std::collections::VecDeque;
 
 use crate::candidate::*;
 use crate::game::{self, Game};
-use crate::rando::Rando;
 use crate::tournaments::*;
 
-#[cfg(test)]
-use crate::rando::RealRando;
+#[mockall_double::double]
+use crate::rando::Rando;
 
 pub struct SingleElimination<G: Game> {
     pub game: G,
@@ -22,7 +21,7 @@ impl<G: Game> SingleElimination<G> {
 }
 
 impl<G: Game> Tournament for SingleElimination<G> {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut dyn Rando) -> Vec<usize> {
+    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> Vec<usize> {
         let mut remaining: VecDeque<usize> = VecDeque::with_capacity(population.len());
         let mut losers: Vec<usize> = Vec::with_capacity(population.len());
 
@@ -61,18 +60,14 @@ mod tests {
     #[test]
     fn test_single_elimination_tournament() {
         let config = configuration();
-        let mut r = RealRando::new();
-        let g = game::sample::Sample::new(TRIES_PER_GAME);
+        let pop = &vec![
+            Candidate::from_chromosone([1, 0, 1, 0, 1], &config),
+            Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
+        ];
+        let mut r = Rando::default();
+        r.expect_shuffle().times(1).return_const(());
+        let g = game::full::Full::new();
         let t = SingleElimination::new(g);
-        assert_eq!(
-            t.run(
-                &vec![
-                    Candidate::from_chromosone([1, 0, 1, 0, 1], &config),
-                    Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
-                ],
-                &mut r
-            ),
-            [1, 0]
-        );
+        assert_eq!(t.run(&pop, &mut r), [1, 0]);
     }
 }

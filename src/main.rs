@@ -40,7 +40,7 @@ mod tournaments;
 #[cfg(not(test))]
 fn main() {
     use candidate::Candidate;
-    use rando::RealRando;
+    use rando::Rando;
 
     use std::env;
     use std::time::Instant;
@@ -51,8 +51,8 @@ fn main() {
         iterations = args[1].parse().unwrap();
     }
     let mut population = Vec::<Candidate>::with_capacity(POPSIZE);
-    let mut rng = RealRando::new();
-    let config = configuration();
+    let mut rng = Rando::new();
+    let mut config = configuration();
 
     for _ in 0..POPSIZE {
         population.push(Candidate::new(&config, &mut rng));
@@ -60,7 +60,14 @@ fn main() {
 
     let start = Instant::now();
 
+    assert_eq!(population.len(), POPSIZE);
+    assert_eq!(
+        config.generation.iter().fold(0, |sum, c| sum + c.n),
+        POPSIZE
+    );
+
     for i in 0..iterations {
+        config.iteration = i;
         population = generation::generation(&population, &config, &mut rng);
         if i % 10 == 0 {
             eprintln!(
@@ -69,6 +76,10 @@ fn main() {
                 population[0].total_score()
             );
         }
+    }
+
+    for i in 0..POPSIZE / 2 {
+        eprintln!("{:?}", population[i].chromosone);
     }
 
     println!("{{\"elapsed_ms\": {},", start.elapsed().as_millis());
@@ -86,8 +97,10 @@ fn main() {
         schedule_data::SYMBOL_NAMES[population[0].chromosone[LENGTH - 1]]
     );
     println!(
-        "  \"violations\":{}, \"score\":{}}}",
+        "  \"violations\":{}, \"score\":{}, \"iteration\":{}, \"average_iteration\":{}}}",
         population[0].violations,
-        population[0].total_score()
+        population[0].total_score(),
+        population[0].iteration,
+        population.iter().fold(0usize, |sum, p| sum + p.iteration) as f64 / population.len() as f64,
     )
 }

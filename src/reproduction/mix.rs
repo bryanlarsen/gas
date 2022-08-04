@@ -40,7 +40,6 @@ impl Crossover for Mix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rando::RandoIter;
     use mockall::*;
 
     #[test]
@@ -51,7 +50,7 @@ mod tests {
         r.expect_uniform_iter()
             .with(predicate::eq(0..2))
             .times(1)
-            .returning(|_| RandoIter::mock(&[1, 0, 1, 0, 1]));
+            .returning(|_| [1, 0, 1, 0, 1].iter().cloned());
         Candidate::assert_eq(
             &m.run(
                 &Candidate::from_chromosone([0, 1, 2, 0, 1], &config),

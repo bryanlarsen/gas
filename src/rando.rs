@@ -14,45 +14,6 @@ pub struct Rando {
     pub weighted_distribution: Option<Box<rand::distributions::WeightedIndex<usize>>>,
 }
 
-#[cfg(not(test))]
-pub struct RandoIter {
-    pub iter: rand::distributions::DistIter<rand::distributions::Uniform<usize>, ThreadRng, usize>,
-}
-
-#[cfg(test)]
-pub struct RandoIter {
-    pub iter: std::iter::Cloned<std::slice::Iter<'static, usize>>,
-}
-
-// #[cfg(test)]
-// impl Iterator for RandoIter {
-//     type Item = usize;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         match self.iter.next() {
-//             Some(u) => Some(*u),
-//             None => None,
-//         }
-//     }
-// }
-
-impl Iterator for RandoIter {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
-    }
-}
-
-#[cfg(test)]
-impl RandoIter {
-    pub fn mock(slice: &'static [usize]) -> Self {
-        Self {
-            iter: slice.iter().cloned(),
-        }
-    }
-}
-
 #[cfg_attr(test, automock)]
 #[cfg_attr(test, allow(dead_code))]
 impl Rando {
@@ -72,16 +33,18 @@ impl Rando {
     }
 
     #[cfg(not(test))]
-    pub fn uniform_iter(&self, range: std::ops::Range<usize>) -> RandoIter {
-        RandoIter {
-            iter: rand::distributions::Uniform::from(range).sample_iter(self.rng.clone()),
-        }
+    pub fn uniform_iter(
+        &self,
+        range: std::ops::Range<usize>,
+    ) -> rand::distributions::DistIter<rand::distributions::Uniform<usize>, ThreadRng, usize> {
+        rand::distributions::Uniform::from(range).sample_iter(self.rng.clone())
     }
 
     #[cfg(test)]
-    pub fn uniform_iter(&self, _range: std::ops::Range<usize>) -> RandoIter {
-        RandoIter {
-            iter: [0usize].iter().cloned(),
-        }
+    pub fn uniform_iter(
+        &self,
+        _range: std::ops::Range<usize>,
+    ) -> std::iter::Cloned<std::slice::Iter<'static, usize>> {
+        [0usize].iter().cloned()
     }
 }

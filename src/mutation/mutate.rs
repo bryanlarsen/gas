@@ -5,7 +5,7 @@ use crate::test_data::*;
 
 use crate::candidate::Candidate;
 use crate::config::Configuration;
-use crate::reproduction::Mutation;
+use crate::mutation::Mutation;
 
 #[mockall_double::double]
 use crate::rando::Rando;

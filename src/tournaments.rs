@@ -1,3 +1,4 @@
+pub mod scale;
 pub mod single_elimination;
 
 use crate::candidate::*;
@@ -5,10 +6,8 @@ use crate::candidate::*;
 #[mockall_double::double]
 use crate::rando::Rando;
 
-/** a tournament sorts candidates, with "better" candidates toward the end of
- * the list. The result is returned as an list of indices into the input
- * population vector.
+/** A tournament ranks candidates.   It returns a winner plus a ranking for each candidate in the population, with higher numbers being better.
  */
 pub trait Tournament {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> Vec<usize>;
+    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> (Candidate, Vec<usize>);
 }

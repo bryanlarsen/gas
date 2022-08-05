@@ -69,7 +69,7 @@ mod tests {
             &Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
             &Candidate {
                 chromosone: [0, 0, 1, 0, 1],
-                scores: [1.0, 1.5, 2.0, 2.0, f64::NAN, f64::NAN],
+                scores: [1.0, 1.5, 1.0, 2.0, 2.0, 2.0, f64::NAN, f64::NAN, 2.0],
                 violations: 0,
                 iteration: 0,
             },
@@ -88,7 +88,17 @@ mod tests {
             &Candidate::new(&config, &mut r),
             &Candidate {
                 chromosone: [2, 2, 2, 2, 2],
-                scores: [f64::NAN, f64::NAN, f64::NAN, f64::NAN, 1.0, 1.0],
+                scores: [
+                    f64::NAN,
+                    f64::NAN,
+                    2.0,
+                    f64::NAN,
+                    f64::NAN,
+                    2.0,
+                    1.0,
+                    1.0,
+                    0.25,
+                ],
                 violations: 0,
                 iteration: 0,
             },

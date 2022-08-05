@@ -47,4 +47,23 @@ impl Rando {
     ) -> std::iter::Cloned<std::slice::Iter<'static, usize>> {
         [0usize].iter().cloned()
     }
+
+    #[cfg(not(test))]
+    pub fn weighted_iter(
+        &self,
+        weights: &[usize],
+    ) -> rand::distributions::DistIter<rand::distributions::WeightedIndex<usize>, ThreadRng, usize>
+    {
+        rand::distributions::WeightedIndex::new(weights)
+            .unwrap()
+            .sample_iter(self.rng.clone())
+    }
+
+    #[cfg(test)]
+    pub fn weighted_iter(
+        &self,
+        _weights: &[usize],
+    ) -> std::iter::Cloned<std::slice::Iter<'static, usize>> {
+        [0usize].iter().cloned()
+    }
 }

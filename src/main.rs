@@ -29,12 +29,12 @@ mod test_data;
 mod candidate;
 mod config;
 mod constraints;
+mod crossover;
 mod fitness;
 mod game;
 mod generation;
+mod mutation;
 mod rando;
-mod repopulate;
-mod reproduction;
 mod tournaments;
 
 #[cfg(not(test))]
@@ -60,12 +60,6 @@ fn main() {
 
     let start = Instant::now();
 
-    assert_eq!(population.len(), POPSIZE);
-    assert_eq!(
-        config.generation.iter().fold(0, |sum, c| sum + c.n),
-        POPSIZE
-    );
-
     for i in 0..iterations {
         config.iteration = i;
         population = generation::generation(&population, &config, &mut rng);
@@ -76,10 +70,6 @@ fn main() {
                 population[0].total_score()
             );
         }
-    }
-
-    for i in 0..POPSIZE / 2 {
-        eprintln!("{:?}", population[i].chromosone);
     }
 
     println!("{{\"elapsed_ms\": {},", start.elapsed().as_millis());

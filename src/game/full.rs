@@ -68,13 +68,13 @@ mod tests {
             g.run(
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.1, 0.2, 0.1, 0.0, 0.0],
+                    scores: [0.0, 0.1, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                     iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0],
+                    scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                     iteration: 0,
                 },
@@ -92,13 +92,13 @@ mod tests {
             g.run(
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0],
+                    scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 2,
                     iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0],
+                    scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 1,
                     iteration: 0,
                 },
@@ -120,13 +120,13 @@ mod tests {
             g.run(
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                     iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                     iteration: 0,
                 },

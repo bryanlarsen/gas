@@ -5,7 +5,7 @@ use crate::test_data::*;
 
 use crate::candidate::Candidate;
 use crate::config::Configuration;
-use crate::reproduction::Crossover;
+use crate::crossover::Crossover;
 
 #[mockall_double::double]
 use crate::rando::Rando;

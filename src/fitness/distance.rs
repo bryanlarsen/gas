@@ -10,7 +10,7 @@ use super::FitnessFunction;
 /**
 The Distance fitness scores discourage clumping of symbols in the chromosone and encourage identical symbols to spread out evenly.
 
-It returns two scores for each symbol: the minimum distance between two instances of the same symbol in the chromosone, and the average distance.
+It returns three scores for each symbol: the minimum distance between two instances of the same symbol in the chromosone, the average distance and the inverse of the count of adjacent identical symbols (returning 2 if no adjacent symbols).
 
 If the symbol does not occur at least twice in the chromosone resulting in a distance that cannot be calculated, then the score is NaN.   Tournaments consider any comparison with NaN to be a tie so they are indifferent between any spacing and no spacing.
 */
@@ -27,7 +27,7 @@ impl Distance {
 
 impl FitnessFunction for Distance {
     fn run(&self, chromosone: &[usize; LENGTH]) -> Vec<f64> {
-        let mut scores: Vec<f64> = Vec::with_capacity(NSYMS * 2);
+        let mut scores: Vec<f64> = Vec::with_capacity(NSYMS * 3);
 
         let mut current_position: Vec<usize> = vec![usize::MAX; NSYMS];
         let mut distances: [Vec<usize>; NSYMS] = array_init(|_| vec![]);
@@ -44,16 +44,23 @@ impl FitnessFunction for Distance {
             if distances[n].len() > 0 {
                 let minimum = distances[n].iter().min().unwrap();
                 scores.push(std::cmp::min(self.max, *minimum) as f64);
-                let average =
-                    (distances[n].iter().sum::<usize>() as f64) / (distances[n].len() as f64);
-                scores.push(if average > self.max as f64 {
-                    self.max as f64
+                let sum = distances[n]
+                    .iter()
+                    .map(|d| usize::min(self.max, *d))
+                    .sum::<usize>() as f64;
+                scores.push(sum / (distances[n].len() as f64));
+                let zcount = distances[n]
+                    .iter()
+                    .fold(0usize, |c, d| if *d == 1 { c + 1 } else { c });
+                scores.push(if zcount == 0 {
+                    2.0
                 } else {
-                    average
+                    1.0 / zcount as f64
                 });
             } else {
                 scores.push(f64::NAN);
                 scores.push(f64::NAN);
+                scores.push(2.0);
             }
         }
 
@@ -72,7 +79,7 @@ mod tests {
         let d = Distance::new(7);
         assert_scores_eq(
             &d.run(&[0, 0, 1, 0, 1]),
-            &[1.0, 1.5, 2.0, 2.0, f64::NAN, f64::NAN],
+            &[1.0, 1.5, 1.0, 2.0, 2.0, 2.0, f64::NAN, f64::NAN, 2.0],
         );
     }
     #[test]
@@ -80,7 +87,7 @@ mod tests {
         let d = Distance::new(1);
         assert_scores_eq(
             &d.run(&[0, 0, 1, 0, 1]),
-            &[1.0, 1.0, 1.0, 1.0, f64::NAN, f64::NAN],
+            &[1.0, 1.0, 1.0, 1.0, 1.0, 2.0, f64::NAN, f64::NAN, 2.0],
         );
     }
 }

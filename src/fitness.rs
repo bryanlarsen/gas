@@ -15,7 +15,7 @@ pub fn scores(
     chromosone: &[usize; LENGTH],
     score_config: &[Box<dyn FitnessFunction>],
 ) -> [f64; NSCORES] {
-    let mut scores = [0f64; NSCORES]; // FIXME -- use vec instead so don't have to initialize?
+    let mut scores = [0f64; NSCORES];
     let mut i = 0;
     for func in score_config {
         let s = func.run(chromosone);

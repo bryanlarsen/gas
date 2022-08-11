@@ -10,6 +10,7 @@ pub const TRIES_PER_GAME: std::ops::Range<usize> = 1usize..4usize;
 pub const NSCORES: usize = NSYMS * 3;
 //pub const POPSIZE: usize = 2;
 pub const NCOLORS: usize = 2;
+pub const TABOO_DISTANCE: usize = 1;
 
 pub fn configuration() -> Configuration {
     Configuration::new(InitConfiguration {

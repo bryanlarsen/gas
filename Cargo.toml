@@ -9,6 +9,7 @@ edition = "2021"
 array-init = "2.0.1"
 mockall_double = "0.3.0"
 rand = "0.8.5"
+signal-hook = "0.3.14"
 
 [dev-dependencies]
 mockall = "0.11.1"

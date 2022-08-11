@@ -14,9 +14,10 @@ pub const LENGTH: usize = schedule_data::LENGTH;
 pub const NCOLORS: usize = schedule_data::NCOLORS;
 pub const MAX_WEIGHT: usize = schedule_data::MAX_WEIGHT;
 
-pub const POPSIZE: usize = 100;
+pub const POPSIZE: usize = 200;
 pub const NSCORES: usize = /* distance */
     NSYMS * 3 + /* color */ NCOLORS * NSYMS + /* weighted */ MAX_WEIGHT * NSYMS;
+pub const TABOO_DISTANCE: usize = 5;
 
 // specifies the configuration of how to create a generation.  Each generation is built from tournament winners and offspring, this specifies how much of each and how they are configured.
 pub fn configuration() -> Configuration {

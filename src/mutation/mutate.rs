@@ -18,7 +18,7 @@ pub struct Mutate {
 }
 
 impl Mutate {
-    pub fn new(n: usize) -> Mutate {
+    pub const fn new(n: usize) -> Mutate {
         Mutate { n }
     }
 }

@@ -4,9 +4,45 @@ use crate::fitness::FitnessFunction;
 use crate::mutation::Mutation;
 use crate::tournaments::Tournament;
 
-/// the configuration of the GA
+#[cfg(doc)]
+use crate::candidate::Candidate;
+
+/**
+ * To configure the GA, pass one of these structures to [Configuration::new].
+ * [InitConfiguration.fitness] and [InitConfiguration.constraint] are lists of
+ * the [FitnessFunction]'s and [Constraint]'s used to score an individual
+ * [Candidate]. [InitConfiguration.tournament] is used to rank a population of
+ * candidates. [InitConfiguration.crossover] and [InitConfiguration.mutation]
+ * are weighted lists which specify which algorithms are used during those
+ * phases of the algorithm. Each child has a single crossover and a single
+ * mutation algorithm applied to it. There are null variants of the crossover
+ * and mutation traits available so that these steps may be sometimes skipped.
+ *
+ * The two weighted lists use each element (weight / sum of weights) percent of
+ * the time. This is deterministic, not stochastic -- if there are two elements
+ * with equal weights candidates will alternate between them.
+ * [multidimensional_bresenhams] is used to distribute the weights.
+*
+* Example:
+```
+let config = Configuration::new(InitConfiguration {
+  tournament: Box::new(tournaments::single_elimination::SingleElimination::new(
+    game::sample::Sample::new(TRIES_PER_GAME),
+  )),
+  crossover: vec![],
+  mutation: vec![
+    (Box::new(mutation::null::Null::new()), 9)
+    (Box::new(mutation::mutate::Mutate::new(1)), 1)
+  ],
+  fitness: vec![Box::new(fitness::distance::Distance::new(7))],
+  constraint: vec![],
+})
+```
+*
+ */
+
 pub struct InitConfiguration {
-    /// the tournament phase of the GA provides the weights used when selecting parents
+    /// the [Tournament] phase of the GA provides the weights used when selecting parents
     pub tournament: Box<dyn Tournament>,
     /// which crossover algorithms to use, along with weights indicating ratio of use
     pub crossover: Vec<(Box<dyn Crossover>, usize)>,
@@ -55,7 +91,7 @@ impl<'a> Iterator for MutationIter<'a> {
     }
 }
 
-fn multidimensional_bresenhams(weights: &[usize]) -> Vec<usize> {
+pub fn multidimensional_bresenhams(weights: &[usize]) -> Vec<usize> {
     let mut result: Vec<usize> = vec![];
     if weights.len() == 0 {
         return result;

@@ -1,7 +1,7 @@
-// #[cfg(not(test))]
-// use crate::data::*;
-// #[cfg(test)]
-// use crate::test_data::*;
+#[cfg(not(test))]
+use crate::data::*;
+#[cfg(test)]
+use crate::test_data::*;
 
 use crate::candidate::*;
 use crate::config::*;
@@ -9,7 +9,24 @@ use crate::config::*;
 #[mockall_double::double]
 use crate::rando::Rando;
 
-/// Given one generation of candidates, create the next generation.   The heart of the GA.
+#[cfg(doc)]
+use crate::crossover::Crossover;
+#[cfg(doc)]
+use crate::mutation::Mutation;
+#[cfg(doc)]
+use crate::tournaments::Tournament;
+
+/** Given one generation of candidates, create the next generation.   The heart of the GA.
+
+Each generation consists of the following steps:
+
+1. Run a [Tournament] to order the candidates.
+2. Loop for each new child:
+a.  Select two parents.  Parent selection is biased by [Tournament] score and prefers selecting dissimilar parents.
+b.  Choose a [Crossover] algorithm to run on the two parents to create a child.
+c.  Choose a [Mutation] algorithm to run on the child
+ */
+
 pub fn generation(
     population: &Vec<Candidate>,
     configuration: &Configuration,
@@ -33,7 +50,9 @@ pub fn generation(
             loop {
                 right = &population[popdist.next().unwrap()];
                 if left != right {
-                    break;
+                    if left.distance(&right) > TABOO_DISTANCE {
+                        break;
+                    }
                 }
             }
             let crossover = &configuration.crossover[*crossoverdist.next().unwrap()].0;
@@ -78,7 +97,7 @@ mod tests {
         });
 
         let pop = &mut vec![
-            Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
+            Candidate::from_chromosone([0, 0, 0, 0, 0], &config),
             Candidate::from_chromosone([1, 0, 1, 0, 1], &config),
         ];
         let nextgen = generation(&pop, &config, &mut r);

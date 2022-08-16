@@ -135,8 +135,6 @@ fn main() {
 
     let start = Instant::now();
 
-    const THREADS: usize = 8;
-
     let mut progresses = Vec::<cycle::CycleProgress>::with_capacity(THREADS);
 
     let mut handles = Vec::<thread::JoinHandle<Candidate>>::with_capacity(THREADS);
@@ -192,9 +190,6 @@ fn main() {
         progress.eprint();
         eprintln!("");
         if handle.is_finished() {
-            break;
-        }
-        if sigint.load(Ordering::Relaxed) {
             break;
         }
     }

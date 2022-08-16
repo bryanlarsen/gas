@@ -16,6 +16,9 @@ pub mod config {
     /// the length of a chromosone.
     pub const LENGTH: usize = schedule_data::LENGTH;
 
+    /// number of populations to optimize simultaneously
+    pub const THREADS: usize = 4;
+
     /// the number of [Candidate]'s in a population.
     pub const POPSIZE: usize = 200;
     /// the minimum Hamming distance between two parents.   Parents more closely related are not allowed to breed.

@@ -1,11 +1,6 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
+use crate::config::config::LENGTH;
 
 use crate::candidate::Candidate;
-use crate::config::Configuration;
-use crate::mutation::Mutation;
 
 #[cfg(test)]
 use mockall::*;
@@ -18,13 +13,11 @@ pub struct Rotate {
 }
 
 impl Rotate {
-    pub fn new(n: usize) -> Rotate {
+    pub const fn new(n: usize) -> Rotate {
         Rotate { n }
     }
-}
 
-impl Mutation for Rotate {
-    fn run(&self, candidate: &Candidate, config: &Configuration, rng: &mut Rando) -> Candidate {
+    pub fn run(&self, candidate: &Candidate, rng: &mut Rando) -> Candidate {
         let mut mutated = [0usize; LENGTH];
         mutated.copy_from_slice(&candidate.chromosone);
         let mut curpos = rng.gen_range(0..LENGTH);
@@ -36,7 +29,7 @@ impl Mutation for Rotate {
             curpos = nextpos;
         }
         mutated[nextpos] = origval;
-        Candidate::from_chromosone(mutated, config)
+        Candidate::from_chromosone(mutated)
     }
 }
 
@@ -46,7 +39,6 @@ mod tests {
 
     #[test]
     fn test_rotate1() {
-        let config = configuration();
         let mut r = Rando::default();
         let m = Rotate::new(1);
         r.expect_gen_range()
@@ -58,18 +50,13 @@ mod tests {
             .times(1)
             .return_const(3usize);
         Candidate::assert_eq(
-            &m.run(
-                &Candidate::from_chromosone([0, 1, 2, 0, 1], &config),
-                &config,
-                &mut r,
-            ),
-            &Candidate::from_chromosone([0, 0, 2, 1, 1], &config),
+            &m.run(&Candidate::from_chromosone([0, 1, 2, 0, 1]), &mut r),
+            &Candidate::from_chromosone([0, 0, 2, 1, 1]),
         );
     }
 
     #[test]
     fn test_rotate2() {
-        let config = configuration();
         let mut r = Rando::default();
         let m = Rotate::new(2);
         r.expect_gen_range()
@@ -85,12 +72,8 @@ mod tests {
             .times(1)
             .return_const(2usize);
         Candidate::assert_eq(
-            &m.run(
-                &Candidate::from_chromosone([0, 1, 2, 0, 1], &config),
-                &config,
-                &mut r,
-            ),
-            &Candidate::from_chromosone([1, 2, 0, 0, 1], &config),
+            &m.run(&Candidate::from_chromosone([0, 1, 2, 0, 1]), &mut r),
+            &Candidate::from_chromosone([1, 2, 0, 0, 1]),
         );
     }
 }

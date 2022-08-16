@@ -1,7 +1,4 @@
 #[cfg(test)]
-use crate::test_data::*;
-
-#[cfg(test)]
 use mockall::*;
 
 use crate::candidate::Candidate;
@@ -21,7 +18,7 @@ pub struct Sample {
 /// breakers are attempted. If it is still tied after 10 tie-breakers, the point
 /// goes to left.
 impl Sample {
-    pub fn new(tries_per_game: std::ops::Range<usize>) -> Sample {
+    pub const fn new(tries_per_game: std::ops::Range<usize>) -> Sample {
         Sample { tries_per_game }
     }
 }
@@ -62,6 +59,8 @@ impl Game for Sample {
 #[cfg(test)]
 mod tests {
     use super::*;
+    const TRIES_PER_GAME: std::ops::Range<usize> = 1usize..4;
+    use crate::config::config::FITNESS_CONFIG;
 
     #[test]
     fn test_game() {
@@ -71,7 +70,7 @@ mod tests {
             .times(1)
             .return_const(1usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..NSCORES))
+            .with(predicate::eq(0..FITNESS_CONFIG.nscores))
             .times(1)
             .return_const(2usize);
         let g = Sample::new(TRIES_PER_GAME);
@@ -82,13 +81,11 @@ mod tests {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &mut r
             )
@@ -106,13 +103,11 @@ mod tests {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 2,
-                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 1,
-                    iteration: 0,
                 },
                 &mut r
             )
@@ -127,7 +122,7 @@ mod tests {
             .times(1)
             .return_const(1usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..NSCORES))
+            .with(predicate::eq(0..FITNESS_CONFIG.nscores))
             .times(11)
             .return_const(2usize);
         let g = Sample::new(TRIES_PER_GAME);
@@ -138,13 +133,11 @@ mod tests {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &mut r
             )

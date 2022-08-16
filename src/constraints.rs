@@ -1,7 +1,4 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
+use crate::config::config::{CONSTRAINT_CONFIG, LENGTH};
 
 pub mod invalid_position;
 
@@ -11,16 +8,34 @@ Constraints are used to filter out inviable chromosone's.   In other words, a ca
 
 */
 
-pub trait Constraint {
-    /// returns the number of violations
-    fn run(&self, chromosone: &[usize; LENGTH]) -> usize;
+pub enum Constraint {
+    #[cfg_attr(test, allow(dead_code))]
+    InvalidPosition(invalid_position::InvalidPosition),
 }
 
-pub fn constraint_violations(
-    chromosone: &[usize; LENGTH],
-    constraints: &[Box<dyn Constraint>],
-) -> usize {
-    constraints
-        .iter()
-        .fold(0usize, |sum, c| sum + c.run(chromosone))
+impl Constraint {
+    /// returns the number of violations
+    pub fn run(&self, chromosone: &[usize; LENGTH]) -> usize {
+        match self {
+            Constraint::InvalidPosition(c) => c.run(chromosone),
+        }
+    }
+
+    pub fn violations(chromosone: &[usize; LENGTH]) -> usize {
+        CONSTRAINT_CONFIG
+            .constraints
+            .iter()
+            .fold(0usize, |sum, c| sum + c.run(chromosone))
+    }
+}
+
+/// Create a const CONSTRAINT_CONFIG
+pub struct ConstraintConfig {
+    pub constraints: &'static [Constraint],
+}
+
+impl ConstraintConfig {
+    pub const fn new(constraints: &'static [Constraint]) -> ConstraintConfig {
+        ConstraintConfig { constraints }
+    }
 }

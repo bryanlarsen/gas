@@ -1,9 +1,4 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
-
-use super::Constraint;
+use crate::config::config::{LENGTH, NSYMS};
 
 /**
 
@@ -16,13 +11,11 @@ pub struct InvalidPosition {
 }
 
 impl InvalidPosition {
-    pub fn new(invalid_positions: [[bool; LENGTH]; NSYMS]) -> InvalidPosition {
+    pub const fn new(invalid_positions: [[bool; LENGTH]; NSYMS]) -> InvalidPosition {
         InvalidPosition { invalid_positions }
     }
-}
 
-impl Constraint for InvalidPosition {
-    fn run(&self, chromosone: &[usize; LENGTH]) -> usize {
+    pub fn run(&self, chromosone: &[usize; LENGTH]) -> usize {
         let mut violations: usize = 0;
         for i in 0..LENGTH {
             if self.invalid_positions[chromosone[i]][i] {

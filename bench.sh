@@ -4,7 +4,7 @@ set -eo pipefail
 set -x
 
 template() {
-    cat <<EOF > src/data.rs
+    cat <<EOF > src/config.rs
 use crate::config::*;
 use crate::constraints;
 use crate::crossover;

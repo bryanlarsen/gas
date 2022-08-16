@@ -1,11 +1,5 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
-
 use crate::candidate::Candidate;
-use crate::config::Configuration;
-use crate::crossover::Crossover;
+use crate::config::config::LENGTH;
 
 #[mockall_double::double]
 use crate::rando::Rando;
@@ -13,19 +7,11 @@ use crate::rando::Rando;
 pub struct Splice {}
 
 impl Splice {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {}
     }
-}
 
-impl Crossover for Splice {
-    fn run(
-        &self,
-        left: &Candidate,
-        right: &Candidate,
-        config: &Configuration,
-        rng: &mut Rando,
-    ) -> Candidate {
+    pub fn run(&self, left: &Candidate, right: &Candidate, rng: &mut Rando) -> Candidate {
         let mut child = [0usize; LENGTH];
         let mut start;
         let mut end;
@@ -42,7 +28,7 @@ impl Crossover for Splice {
         child[0..start].copy_from_slice(&left.chromosone[0..start]);
         child[start..end].copy_from_slice(&right.chromosone[start..end]);
         child[end..LENGTH].copy_from_slice(&left.chromosone[end..LENGTH]);
-        Candidate::from_chromosone(child, config)
+        Candidate::from_chromosone(child)
     }
 }
 
@@ -53,7 +39,6 @@ mod tests {
 
     #[test]
     fn test_splice() {
-        let config = configuration();
         let mut r = Rando::default();
         let m = Splice::new();
         r.expect_gen_range()
@@ -66,12 +51,11 @@ mod tests {
             .return_const(3usize);
         Candidate::assert_eq(
             &m.run(
-                &Candidate::from_chromosone([0, 1, 2, 0, 1], &config),
-                &Candidate::from_chromosone([2, 0, 0, 1, 2], &config),
-                &config,
+                &Candidate::from_chromosone([0, 1, 2, 0, 1]),
+                &Candidate::from_chromosone([2, 0, 0, 1, 2]),
                 &mut r,
             ),
-            &Candidate::from_chromosone([0, 0, 0, 0, 1], &config),
+            &Candidate::from_chromosone([0, 0, 0, 0, 1]),
         );
     }
 }

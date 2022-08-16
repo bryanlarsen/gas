@@ -12,7 +12,7 @@ pub struct SingleElimination<G: Game> {
 }
 
 impl<G: Game> SingleElimination<G> {
-    pub fn new(game: G) -> SingleElimination<G> {
+    pub const fn new(game: G) -> SingleElimination<G> {
         SingleElimination { game }
     }
 }
@@ -58,14 +58,12 @@ impl<G: Game> Tournament for SingleElimination<G> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_data::*;
 
     #[test]
     fn test_single_elimination_tournament() {
-        let config = configuration();
         let pop = &vec![
-            Candidate::from_chromosone([1, 0, 1, 0, 1], &config),
-            Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
+            Candidate::from_chromosone([1, 0, 1, 0, 1]),
+            Candidate::from_chromosone([0, 0, 1, 0, 1]),
         ];
         let mut r = Rando::default();
         r.expect_shuffle().times(1).return_const(());
@@ -78,11 +76,10 @@ mod tests {
 
     #[test]
     fn test_bye() {
-        let config = configuration();
         let pop = &vec![
-            Candidate::from_chromosone([1, 0, 1, 0, 1], &config),
-            Candidate::from_chromosone([0, 0, 1, 0, 1], &config),
-            Candidate::from_chromosone([0, 1, 2, 0, 1], &config),
+            Candidate::from_chromosone([1, 0, 1, 0, 1]),
+            Candidate::from_chromosone([0, 0, 1, 0, 1]),
+            Candidate::from_chromosone([0, 1, 2, 0, 1]),
         ];
         let mut r = Rando::default();
         r.expect_shuffle().times(1).return_const(());

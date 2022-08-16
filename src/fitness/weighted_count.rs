@@ -1,9 +1,4 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
-
-use super::FitnessFunction;
+use crate::config::config::{LENGTH, NSYMS};
 
 /**
 
@@ -17,19 +12,21 @@ pub struct WeightedCount {
 
 impl WeightedCount {
     /// see [`WeightedCount`].   `max_weight` is the maximum value for a weight.   [`WeightedCount`] will return `max_weight` scores for each symbol, so you likely want to set `max_weight` to a small number, like 1 or 3.
-    pub fn new(max_weight: usize, weights: [[usize; LENGTH]; NSYMS]) -> WeightedCount {
+    pub const fn new(max_weight: usize, weights: [[usize; LENGTH]; NSYMS]) -> WeightedCount {
         WeightedCount {
             max_weight,
             weights,
         }
     }
-}
 
-impl FitnessFunction for WeightedCount {
-    fn run(&self, chromosone: &[usize; LENGTH]) -> Vec<f64> {
+    pub const fn nscores(&self) -> usize {
+        self.max_weight * NSYMS
+    }
+
+    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
         let mut scores: Vec<f64> = vec![0f64; NSYMS * self.max_weight];
 
-        for i in 0..LENGTH {
+        for i in 0..chromosone.len() {
             for w in 0..self.weights[chromosone[i]][i] {
                 scores[chromosone[i] * self.max_weight + w] += 1.0;
             }

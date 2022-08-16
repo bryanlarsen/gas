@@ -1,6 +1,8 @@
+use crate::config::config::TOURNAMENT;
+
 use crate::candidate::Candidate;
-use crate::config::Configuration;
 use crate::generation;
+use crate::tournaments::Tournament;
 
 #[mockall_double::double]
 use crate::rando::Rando;
@@ -10,6 +12,7 @@ use std::sync::{
     Arc,
 };
 
+#[cfg_attr(test, allow(dead_code))]
 /** Communication between a [cycle] running in a thread and the main thread. */
 pub struct CycleProgress {
     /// out: the number of iterations of the GA that have been run
@@ -24,6 +27,7 @@ pub struct CycleProgress {
     pub sigint: Arc<AtomicBool>,
 }
 
+#[cfg_attr(test, allow(dead_code))]
 impl CycleProgress {
     pub fn new(sigint: &Arc<AtomicBool>) -> CycleProgress {
         CycleProgress {
@@ -67,13 +71,11 @@ impl CycleProgress {
  * 2. Keep running the GA, doing a biased sampling of the winners until we've got enough samples or we've been doing this step for too long.
  * 3. Do a final tournament of the winners do get the grand winner, which we return.
  *
- * population: initial population of [Candidate]'s
- * config: [Configuration]
  */
 
+#[cfg_attr(test, allow(dead_code))]
 pub fn cycle(
     population: &mut Vec<Candidate>,
-    config: &mut Configuration,
     progress: &mut CycleProgress,
     rng: &mut Rando,
 ) -> Candidate {
@@ -108,10 +110,9 @@ pub fn cycle(
     winners.push(population[0]);
 
     for i in 0..(2 << 20) {
-        config.iteration = i;
         progress.iteration.store(i, Ordering::Relaxed);
 
-        *population = generation::generation(population, &config, rng);
+        *population = generation::generation(population, rng);
 
         let ts = population[0].total_score();
         progress.score.store(ts.round() as isize, Ordering::Relaxed);
@@ -170,6 +171,6 @@ pub fn cycle(
     }
 
     // tournament phase
-    let (winner, _) = config.tournament.run(&winners, rng);
+    let (winner, _) = TOURNAMENT.run(&winners, rng);
     winner
 }

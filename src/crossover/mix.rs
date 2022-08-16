@@ -1,11 +1,6 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
+use crate::config::config::LENGTH;
 
 use crate::candidate::Candidate;
-use crate::config::Configuration;
-use crate::crossover::Crossover;
 
 #[mockall_double::double]
 use crate::rando::Rando;
@@ -13,19 +8,11 @@ use crate::rando::Rando;
 pub struct Mix {}
 
 impl Mix {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {}
     }
-}
 
-impl Crossover for Mix {
-    fn run(
-        &self,
-        left: &Candidate,
-        right: &Candidate,
-        config: &Configuration,
-        rng: &mut Rando,
-    ) -> Candidate {
+    pub fn run(&self, left: &Candidate, right: &Candidate, rng: &mut Rando) -> Candidate {
         let mut child = left.chromosone.clone();
         let mut r = rng.uniform_iter(0..2);
         for i in 0..LENGTH {
@@ -33,7 +20,7 @@ impl Crossover for Mix {
                 child[i] = right.chromosone[i];
             }
         }
-        Candidate::from_chromosone(child, config)
+        Candidate::from_chromosone(child)
     }
 }
 
@@ -44,7 +31,6 @@ mod tests {
 
     #[test]
     fn test_mix() {
-        let config = configuration();
         let mut r = Rando::default();
         let m = Mix::new();
         r.expect_uniform_iter()
@@ -53,12 +39,11 @@ mod tests {
             .returning(|_| [1, 0, 1, 0, 1].iter().cloned());
         Candidate::assert_eq(
             &m.run(
-                &Candidate::from_chromosone([0, 1, 2, 0, 1], &config),
-                &Candidate::from_chromosone([2, 0, 0, 1, 2], &config),
-                &config,
+                &Candidate::from_chromosone([0, 1, 2, 0, 1]),
+                &Candidate::from_chromosone([2, 0, 0, 1, 2]),
                 &mut r,
             ),
-            &Candidate::from_chromosone([0, 0, 2, 1, 1], &config),
+            &Candidate::from_chromosone([0, 0, 2, 1, 1]),
         );
     }
 }

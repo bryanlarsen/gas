@@ -1,9 +1,4 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
-
-use super::FitnessFunction;
+use crate::config::config::{LENGTH, NSYMS};
 
 use array_init::array_init;
 
@@ -14,42 +9,52 @@ In a scheduling system, there are various types of shifts like overnight, weeken
 This type of fitness function is genericized here by assigning each chromosone location (aka shift) a "color" (aka shift type), and then for each symbol (aka employee), count how many of each color is in the chromosone.   The negated absolute difference between each count and corresponding preference is a fitness score.  (negated so that 0 is the highest score).
 
 Parameters:
-  chromosone_colors: the color of each location in a corresponding chromosone
+  chromosone_colors: the color of each locus in a corresponding chromosone
   preferences: the preferred count each symbol has for each color.
 
 */
 
 pub struct ColorCount {
     pub chromosone_colors: [usize; LENGTH],
-    pub preferences: [[usize; NCOLORS]; NSYMS],
+    pub preferences: [&'static [usize]; NSYMS],
+    pub ncolors: usize,
 }
 
 impl ColorCount {
     /// see [`ColorCount`] docs
-    pub fn new(
+    pub const fn new(
+        ncolors: usize,
         chromosone_colors: [usize; LENGTH],
-        preferences: [[usize; NCOLORS]; NSYMS],
+        preferences: [&'static [usize]; NSYMS],
     ) -> ColorCount {
+        let mut i = 0;
+        while i < preferences.len() {
+            assert!(ncolors == preferences[i].len());
+            i += 1;
+        }
         ColorCount {
+            ncolors,
             chromosone_colors,
             preferences,
         }
     }
-}
+    pub const fn nscores(&self) -> usize {
+        self.ncolors * NSYMS
+    }
 
-impl FitnessFunction for ColorCount {
-    fn run(&self, chromosone: &[usize; LENGTH]) -> Vec<f64> {
-        let mut counts: [[usize; NCOLORS]; NSYMS] = array_init(|_| [0usize; NCOLORS]);
-        let mut scores = Vec::<f64>::with_capacity(NCOLORS * NSYMS);
+    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
+        assert_eq!(chromosone.len(), self.chromosone_colors.len());
+        let mut counts: [Vec<usize>; NSYMS] = array_init(|_| vec![0usize; self.ncolors]);
+        let mut scores = Vec::<f64>::with_capacity(self.ncolors * NSYMS);
 
-        for i in 0..LENGTH {
+        for i in 0..chromosone.len() {
             let color = self.chromosone_colors[i];
             let sym = chromosone[i];
             counts[sym][color] += 1;
         }
 
         for m in 0..NSYMS {
-            for n in 0..NCOLORS {
+            for n in 0..self.ncolors {
                 scores.push(-(counts[m][n].abs_diff(self.preferences[m][n]) as f64))
             }
         }
@@ -64,7 +69,7 @@ mod tests {
 
     #[test]
     fn test_color_count() {
-        let cc = ColorCount::new([0, 1, 0, 1, 0], [[1, 1], [0, 0], [2, 2]]);
+        let cc = ColorCount::new(2, [0, 1, 0, 1, 0], [&[1, 1], &[0, 0], &[2, 2]]);
         let scores = cc.run(&[0, 0, 0, 1, 1]);
         // sym0 has 2 0's and 1 1, preferring one of each.
         // sym1 has 1 of each and prefers 0 of each.

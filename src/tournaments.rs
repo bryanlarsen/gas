@@ -1,7 +1,7 @@
 pub mod scale;
 pub mod single_elimination;
 
-use crate::candidate::*;
+use crate::candidate::Candidate;
 
 #[mockall_double::double]
 use crate::rando::Rando;

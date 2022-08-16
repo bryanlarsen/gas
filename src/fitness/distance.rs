@@ -1,11 +1,6 @@
-#[cfg(not(test))]
-use crate::data::*;
-#[cfg(test)]
-use crate::test_data::*;
+use crate::config::config::NSYMS;
 
 use array_init::array_init;
-
-use super::FitnessFunction;
 
 /**
 The Distance fitness scores discourage clumping of symbols in the chromosone and encourage identical symbols to spread out evenly.
@@ -20,13 +15,15 @@ pub struct Distance {
 
 impl Distance {
     /// creates a new [`Distance`].  `max` constrains resulting scores.  For instance in a scheduling system if you consider that as long as shifts are at least a week apart further spacing is not an improvement, you could set `max` to 7 (assuming there's only one shift per day in the chromoone).
-    pub fn new(max: usize) -> Distance {
+    pub const fn new(max: usize) -> Distance {
         Distance { max }
     }
-}
 
-impl FitnessFunction for Distance {
-    fn run(&self, chromosone: &[usize; LENGTH]) -> Vec<f64> {
+    pub const fn nscores(&self) -> usize {
+        3 * NSYMS
+    }
+
+    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
         let mut scores: Vec<f64> = Vec::with_capacity(NSYMS * 3);
 
         let mut current_position: Vec<usize> = vec![usize::MAX; NSYMS];

@@ -15,7 +15,7 @@ pub struct Scale<T: Tournament> {
 
 impl<T: Tournament> Scale<T> {
     #[cfg_attr(test, allow(dead_code))]
-    pub fn new(tournament: T, constant: usize, scale: f64, exponent: f64) -> Self {
+    pub const fn new(tournament: T, constant: usize, scale: f64, exponent: f64) -> Self {
         Self {
             tournament,
             constant,

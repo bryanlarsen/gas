@@ -11,7 +11,7 @@ pub struct Full {}
 /// If that is equal, the candidate that is superior in the most scores wins. In
 /// the case of a tie, winner is random.
 impl Full {
-    pub fn new() -> Full {
+    pub const fn new() -> Full {
         Full {}
     }
 }
@@ -70,13 +70,11 @@ mod tests {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.1, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &mut r
             )
@@ -94,13 +92,11 @@ mod tests {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 2,
-                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 1,
-                    iteration: 0,
                 },
                 &mut r
             )
@@ -122,13 +118,11 @@ mod tests {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
                     scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
-                    iteration: 0,
                 },
                 &mut r
             )

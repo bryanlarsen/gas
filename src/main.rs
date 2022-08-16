@@ -8,25 +8,25 @@ This optimizer was designed for a scheduling system, and will work best for prob
 
 - there are a large number of fitness functions rather than a single number or even a few numbers to be optimized.  This is the primary difference between this implementation and many others.   In our case, how well the schedule fits each preference for each employee is treated as an fitness function.   Given that the employee can specify a suitability for each shift, this means that the number of fitness functions is a multiple of the length of the chromosone.
 
-- variables are discrete rather than continuous.   In our case, there is a small fixed number of employees that can be booked per shift.
+- variables are discrete rather than continuous.   In our case, there are a small fixed number of employees that can be booked per shift.
 
 - the "chromosone" has a fixed length.
 
-- the position in the chromosone (aka the locus) is significant.    (In some problem domains, the locus is less significant and the ordering of the genes is more significant).
+- the position in the chromosone (aka the locus) is significant.    (In some other problem domains, the locus is less significant and the ordering of the genes is more significant).
 
 - fitness functions are relatively cheap to compute.  Parallelism is at the population rather than the game level.
 
-Some of these characteristics are more hard coded than others.   For example, you can adjust the [FitnessFunction]'s, [Crossover] and [Mutation] functions to make the locus less significant.
+Some of these characteristics are more hard coded than others.   For example, you can adjust the [FitnessFunction]'s, [Crossover] and [Mutation] functions to make the genome relationships more significant.
 
 ## Terminology, Structure and Algorithm.
 
-Every potential solution is called a [Candidate].   Each [Candidate] has a chromosone which defines the solution.   The chromosone is an array of unsigned integers called genes.  Each gene occupies a position in the array called the locus.   Typically genes and loci fairly directly map to real world values.
+Every potential solution is called a [Candidate].   Each [Candidate] has a chromosone which defines the solution.   The chromosone is an array of unsigned integers called genes.  Each gene occupies a position in the array called the locus.   Typically genes and loci fairly directly map to real world values.   In our example code, the mappings are defined in [schedule_data::LOCUS_NAMES] and [schedule_data::SYMBOL_NAMES];
 
 At the time of creation each [Candidate] evaluates all of its [FitnessFunction]'s to determine the [Candidate]'s suitability.  Alongside the [FitnessFunction]'s, [Constraint]'s are also evaluated and number of [Constraint] violations stored.
 
 Because each [Candidate] has many [FitnessFunction] values, [Candidate]'s cannot be trivially and stably ordered.  Instead, two candidates are compared in a [Game], and repeated [Game]'s are run across a population in a [Tournament] to order the [Candidate]'s by [FitnessFunction]'s and [Constraint]'s.
 
-All current [Game] implementations order by [Constraint] violations before [FitnessFunction] scores.   In other words, in other words only if two candidates have the same number of constraint violations are the fitness scores considered.  Most [Game]'s and [Tournament]'s are not stable, and have a strong stochastic component.
+All current [Game] implementations order by [Constraint] violations before [FitnessFunction] scores.   In other words, only if two candidates have the same number of constraint violations are the fitness scores considered.  Most [Game]'s and [Tournament]'s are not stable, and have a strong stochastic component.
 
 A set of [Candidate]'s is called a population.
 
@@ -34,9 +34,15 @@ Each cycle through the algorithm is called a [generation].  A generation creates
 
 1. Run a [Tournament] to order the candidates.
 2. Loop for each new child:
-  a.  Select two parents.  Parent selection is biased by [Tournament] score and prefers selecting dissimilar parents.
-  b.  Choose a [Crossover] algorithm to run on the two parents to create a child.
-  c.  Choose a [Mutation] algorithm to run on the child
+    1.  Select two parents.  Parent selection is biased by [Tournament] score and prefers selecting dissimilar parents.
+    2.  Choose a [Crossover] algorithm to run on the two parents to create a child.
+    3.  Choose a [Mutation] algorithm to run on the child
+
+Typically the GA is tuned so that Null [Crossover] and [Mutation] algorithms are
+often chosen. The Null algorithms simply clone a parent rather than performing a
+crossover or mutation.
+
+Selection of the [Crossover] and [Mutation] algorithms is not done stochastically.  Weights are configured for each algorithm, and the algorithms are cycled respecting the weights.   Therefore if the sum of the weights in [CROSSOVER_CONFIG] have common factors with the sum of the weights in [MUTATION_CONFIG], some combinations of crossover and mutation may never be chosen.   In some cases you may wish to deliberately trigger this effect, but in most cases you should probably ensure that the both sum of weights do not have a common factor.
 
 Looping the [generation] until stagnation is reached is called a [cycle].
 
@@ -46,39 +52,39 @@ Send SIGINT (ctrl-c) to cause the algorithm to determine the current best candid
 
 # Configuration
 
-Configure the GA by creating a [Configuration] using an [InitConfiguration].   See [InitConfiguration] for documentation.
+To configure the GA, adjust the constants in [config].rs. For a new project,
+`test_config.rs` is a simpler starting position.
 
-# Converting to a Library
+This structure blurs the line between tuning parameters and input parameters.
+This line might be slightly different between projects. In our case the input
+parameters are defined in [schedule_data].rs and imported into [config].rs to be
+combined with the tuning parameters. The parameters to the [FitnessFunction]
+constructors and [Constraint] constructors are considered input parameters while
+the list of which [FitnessFunction]'s and [Constraint]'s to use are considered
+tuning parameters.
+
+# How this is used in the real world.
+
+This project is used alongside a Ruby on Rails application. One of the admin
+pages in the app generates the [schedule_data].rs file from a template. The code
+is then compiled and run, outputting progress to stderr and JSON to stdout. The
+JSON is then used to set the schedule.
+
+Putting the compiler in the loop is an "interesting" architecture choice. One
+major driver for this choice is the limitation that Rust arrays must have a size
+that is known at compile time.
+
+If anybody wishes to use this GA and needs the configuration to be set at run
+time rather than compile time, please contact me as this is a very reasonable
+ask.
 
 # Tuning the GA
 
-
-
-Each candidate is an array of LENGTH genes.   Each gene is a usize with a value in 0..NSYMS.
-
-Each candidate results in an array of M scores.   Each score is an f64 with larger numbers being preferred.  M is expected to be a large number -- if you're aggregating scores consider using each score individually.  Each position in the score array has meaning -- the score in position i for candidate A can be compared with the score in position i for candidate B, but cannot be compared with the score in position j.
-
-There are multiple scoring functions for each candidate.  Scoring functions each produce an array of scores which are concatenated to get the final score.
-
-Weighting of scoring functions: TBD -- multiples in score array?
-
-Constraints TBD.
-
-Every generation is created from the previous generation based on the configuration.  Some individuals live on to the next generation by winning tournaments.   Others are born via mutation from a winner.   Others are born via procreation from two winners.
-
-TBD: individuals that win more than one tournament.
+This GA has been tuned by templating [config].rs inside `bench.sh`, which
+adjusts various parameters and then puts the output into a csv file where it can
+be analyzed.
 
  */
-
-#[cfg(not(test))]
-mod data;
-#[cfg(not(test))]
-mod schedule_data;
-#[cfg(not(test))]
-use crate::data::*;
-
-#[cfg(test)]
-mod test_data;
 
 mod candidate;
 mod config;
@@ -88,16 +94,16 @@ mod cycle;
 mod fitness;
 mod game;
 mod generation;
+mod helpers;
 mod mutation;
 mod rando;
 mod tournaments;
 
+#[cfg(not(test))]
+mod schedule_data;
+
 #[cfg(doc)]
 use candidate::Candidate;
-#[cfg(doc)]
-use config::Configuration;
-#[cfg(doc)]
-use config::InitConfiguration;
 #[cfg(doc)]
 use constraints::Constraint;
 #[cfg(doc)]
@@ -114,6 +120,7 @@ use tournaments::Tournament;
 #[cfg(not(test))]
 fn main() {
     use candidate::Candidate;
+    use config::config::*;
     use rando::Rando;
 
     use std::sync::{
@@ -140,7 +147,6 @@ fn main() {
 
         handles.push(thread::spawn(move || {
             let mut population = Vec::<Candidate>::with_capacity(POPSIZE);
-            let mut config = configuration();
             let mut rng = Rando::new();
             /*
                         for i in 0..WINNERS.len() {
@@ -153,9 +159,9 @@ fn main() {
             eprintln!("{}", Candidate::similarity(&population));
              */
             for _ in 0..POPSIZE {
-                population.push(Candidate::new(&config, &mut rng));
+                population.push(Candidate::new(&mut rng));
             }
-            cycle::cycle(&mut population, &mut config, &mut progress, &mut rng)
+            cycle::cycle(&mut population, &mut progress, &mut rng)
         }));
     }
 
@@ -176,10 +182,9 @@ fn main() {
     let mut progress1 = progress.clone();
 
     let handle = thread::spawn(move || {
-        let mut config = configuration();
         let mut rng = Rando::new();
 
-        cycle::cycle(&mut winners, &mut config, &mut progress1, &mut rng)
+        cycle::cycle(&mut winners, &mut progress1, &mut rng)
     });
 
     loop {
@@ -201,19 +206,18 @@ fn main() {
     for i in 0..LENGTH - 1 {
         print!(
             "\"{}\": {}, ",
-            schedule_data::POSITION_NAMES[i],
+            schedule_data::LOCUS_NAMES[i],
             schedule_data::SYMBOL_NAMES[winner.chromosone[i]]
         );
     }
     println!(
         "\"{}\": {} }},",
-        schedule_data::POSITION_NAMES[LENGTH - 1],
+        schedule_data::LOCUS_NAMES[LENGTH - 1],
         schedule_data::SYMBOL_NAMES[winner.chromosone[LENGTH - 1]]
     );
     println!(
-        "  \"violations\":{}, \"score\":{}, \"iteration\":{}}}",
+        "  \"violations\":{}, \"score\":{}}}",
         winner.violations,
         winner.total_score(),
-        winner.iteration,
     )
 }

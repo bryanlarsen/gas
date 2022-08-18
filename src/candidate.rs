@@ -43,6 +43,7 @@ impl Candidate {
         count
     }
 
+    #[allow(dead_code)]
     /// give an estimate of a population's diversity where 1 == all the same and 0 == completely different.   Calculation is similar to a Hamming distance.
     pub fn similarity(population: &[Candidate]) -> f64 {
         let mut similarities = Vec::<f64>::with_capacity(population[0].chromosone.len());

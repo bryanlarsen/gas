@@ -4,6 +4,7 @@ use crate::game::{Game, LeftRight};
 #[mockall_double::double]
 use crate::rando::Rando;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Full {}
 
 /// A game that compares every score at the same position between candidate, all

@@ -7,6 +7,7 @@ use crate::game::*;
 #[mockall_double::double]
 use crate::rando::Rando;
 
+#[derive(Debug, Clone)]
 pub struct Sample {
     pub tries_per_game: std::ops::Range<usize>,
 }

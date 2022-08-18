@@ -16,6 +16,9 @@ pub mod config {
     /// the length of a chromosone.
     pub const LENGTH: usize = schedule_data::LENGTH;
 
+    /// the names of the genes
+    pub const SYMBOL_NAMES: [&str; NSYMS] = schedule_data::SYMBOL_NAMES;
+
     /// number of populations to optimize simultaneously
     pub const THREADS: usize = 4;
 
@@ -31,14 +34,16 @@ pub mod config {
     /// Note that even though Tournament is a trait, because this is a constant we
     /// cannot set the type to `dyn Tournament` even though we would like to. So if
     /// you change the value of this constant you'll also have to change the type.
-    pub const TOURNAMENT: tournaments::scale::Scale<
+/*    pub const TOURNAMENT: tournaments::scale::Scale<
         tournaments::single_elimination::SingleElimination<game::full::Full>,
     > = tournaments::scale::Scale::new(
         tournaments::single_elimination::SingleElimination::new(game::full::Full::new()),
         1,
         1.0,
         2.0,
-    );
+); */
+
+    pub const TOURNAMENT: tournaments::full_season::FullSeason<game::full::Full> = tournaments::full_season::FullSeason::new(game::full::Full::new());
 
     /// The list of [Crossover]'s that the algorithm can choose from, along with the
     /// frequency of use.
@@ -113,6 +118,8 @@ pub mod config {
     pub const NSYMS: usize = 3;
     pub const LENGTH: usize = 5;
     pub const TABOO_DISTANCE: usize = 1;
+
+    pub const SYMBOL_NAMES: [&str; NSYMS] = ["Jack", "Jill", "Jane"];
 
     pub const CROSSOVER_CONFIG: CrossoverConfig = CrossoverConfig::new(&[(1, Crossover::Null)]);
 

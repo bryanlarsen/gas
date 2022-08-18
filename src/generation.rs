@@ -1,5 +1,5 @@
 use crate::config::config::{
-    CROSSOVER_CONFIG, LENGTH, MUTATION_CONFIG, NSYMS, TABOO_DISTANCE, TOURNAMENT,
+    CROSSOVER_CONFIG, MUTATION_CONFIG, TABOO_DISTANCE, TOURNAMENT,
 };
 
 use crate::candidate::Candidate;
@@ -40,12 +40,18 @@ pub fn generation(population: &Vec<Candidate>, rng: &mut Rando) -> Vec<Candidate
         loop {
             let left = &population[popdist.next().unwrap()];
             let mut right;
+            let mut i = 0;
             loop {
                 right = &population[popdist.next().unwrap()];
                 if left != right {
                     if left.distance(&right) > TABOO_DISTANCE {
                         break;
                     }
+                }
+                i += 1;
+                if i > population.len() {
+                    eprintln!("TABOO!");
+                    break;
                 }
             }
             let crossover = crossover_iter.next().unwrap();
@@ -65,6 +71,7 @@ pub fn generation(population: &Vec<Candidate>, rng: &mut Rando) -> Vec<Candidate
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::config::{LENGTH, NSYMS,};
 
     use mockall::predicate;
 

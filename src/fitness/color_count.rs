@@ -18,6 +18,7 @@ pub struct ColorCount {
     pub chromosone_colors: [usize; LENGTH],
     pub preferences: [&'static [usize]; NSYMS],
     pub ncolors: usize,
+    pub color_names: &'static [&'static str],
 }
 
 impl ColorCount {
@@ -26,6 +27,7 @@ impl ColorCount {
         ncolors: usize,
         chromosone_colors: [usize; LENGTH],
         preferences: [&'static [usize]; NSYMS],
+        color_names: &'static [&'static str],
     ) -> ColorCount {
         let mut i = 0;
         while i < preferences.len() {
@@ -36,22 +38,27 @@ impl ColorCount {
             ncolors,
             chromosone_colors,
             preferences,
+            color_names,
         }
     }
     pub const fn nscores(&self) -> usize {
         self.ncolors * NSYMS
     }
 
-    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
-        assert_eq!(chromosone.len(), self.chromosone_colors.len());
+    pub fn count(&self, chromosone: &[usize]) -> [Vec<usize>; NSYMS] {
         let mut counts: [Vec<usize>; NSYMS] = array_init(|_| vec![0usize; self.ncolors]);
-        let mut scores = Vec::<f64>::with_capacity(self.ncolors * NSYMS);
-
         for i in 0..chromosone.len() {
             let color = self.chromosone_colors[i];
             let sym = chromosone[i];
             counts[sym][color] += 1;
         }
+        counts
+    }
+
+    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
+        assert_eq!(chromosone.len(), self.chromosone_colors.len());
+        let mut scores = Vec::<f64>::with_capacity(self.ncolors * NSYMS);
+        let counts = self.count(chromosone);
 
         for m in 0..NSYMS {
             for n in 0..self.ncolors {
@@ -61,6 +68,27 @@ impl ColorCount {
 
         scores
     }
+
+    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
+        let mut descriptions = Vec::<String>::with_capacity(NSYMS);
+        let counts = self.count(chromosone);
+
+        for m in 0..NSYMS {
+            descriptions.push(
+                (0..self.ncolors)
+                    .map(|n| {
+                        format!(
+                            "{} {}-{}",
+                            self.color_names[n], counts[m][n], self.preferences[m][n]
+                        )
+                    })
+                    .collect::<Vec<String>>()
+                    .join(", "),
+            );
+        }
+
+        descriptions
+    }
 }
 
 #[cfg(test)]
@@ -69,7 +97,12 @@ mod tests {
 
     #[test]
     fn test_color_count() {
-        let cc = ColorCount::new(2, [0, 1, 0, 1, 0], [&[1, 1], &[0, 0], &[2, 2]]);
+        let cc = ColorCount::new(
+            2,
+            [0, 1, 0, 1, 0],
+            [&[1, 1], &[0, 0], &[2, 2]],
+            &["weekday", "weekend"],
+        );
         let scores = cc.run(&[0, 0, 0, 1, 1]);
         // sym0 has 2 0's and 1 1, preferring one of each.
         // sym1 has 1 of each and prefers 0 of each.

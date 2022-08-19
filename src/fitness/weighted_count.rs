@@ -34,6 +34,23 @@ impl WeightedCount {
 
         scores
     }
+
+    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
+        let mut descriptions = Vec::<String>::with_capacity(NSYMS);
+        for g in 0..NSYMS {
+            let mut count = 0usize;
+            let mut sum = 0usize;
+            for i in 0..chromosone.len() {
+                if chromosone[i] == g {
+                    count += 1;
+                    sum += self.weights[g][i];
+                }
+            }
+            let mean = (sum as f64) / (count as f64);
+            descriptions.push(mean.to_string());
+        }
+        descriptions
+    }
 }
 #[cfg(test)]
 mod tests {

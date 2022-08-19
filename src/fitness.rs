@@ -6,7 +6,16 @@ pub mod weighted_count;
 /**
 *  A FitnessFunction returns a set of fitness scores when passed a chromosone.
 *
-*  This is implemented as an enum rather than a trait so that we can store them inside a const [FitnessConfig]
+*  This is implemented as an enum rather than a trait so that we can store them
+*  inside a const [FitnessConfig]
+*
+*  Fitness scores are floating point numbers where a higher number is considered
+*  better. Negative numbers are allowed, so if you wish to optimize to zero you
+*  may simply return the negative of the absolute value.
+*
+*  NaN values are valid scores, and indicate that the score cannot be
+*  calculated. When comparing scores, any number compared to a NaN is considered
+*  a tie.
 *
 *  Implementations: [color_count::ColorCount], [distance::Distance], [weighted_count::WeightedCount]
 */
@@ -69,6 +78,14 @@ impl FitnessFunction {
             i += s.len();
         }
         scores
+    }
+
+    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
+        match self {
+            FitnessFunction::ColorCount(ff) => ff.describe(chromosone),
+            FitnessFunction::Distance(ff) => ff.describe(chromosone),
+            FitnessFunction::WeightedCount(ff) => ff.describe(chromosone),
+        }
     }
 }
 

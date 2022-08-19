@@ -16,9 +16,6 @@ pub mod config {
     /// the length of a chromosone.
     pub const LENGTH: usize = schedule_data::LENGTH;
 
-    /// the names of the genes
-    pub const SYMBOL_NAMES: [&str; NSYMS] = schedule_data::SYMBOL_NAMES;
-
     /// number of populations to optimize simultaneously
     pub const THREADS: usize = 4;
 
@@ -34,16 +31,17 @@ pub mod config {
     /// Note that even though Tournament is a trait, because this is a constant we
     /// cannot set the type to `dyn Tournament` even though we would like to. So if
     /// you change the value of this constant you'll also have to change the type.
-/*    pub const TOURNAMENT: tournaments::scale::Scale<
-        tournaments::single_elimination::SingleElimination<game::full::Full>,
-    > = tournaments::scale::Scale::new(
-        tournaments::single_elimination::SingleElimination::new(game::full::Full::new()),
-        1,
-        1.0,
-        2.0,
-); */
+    /*    pub const TOURNAMENT: tournaments::scale::Scale<
+            tournaments::single_elimination::SingleElimination<game::full::Full>,
+        > = tournaments::scale::Scale::new(
+            tournaments::single_elimination::SingleElimination::new(game::full::Full::new()),
+            1,
+            1.0,
+            2.0,
+    ); */
 
-    pub const TOURNAMENT: tournaments::full_season::FullSeason<game::full::Full> = tournaments::full_season::FullSeason::new(game::full::Full::new());
+    pub const TOURNAMENT: tournaments::full_season::FullSeason<game::full::Full> =
+        tournaments::full_season::FullSeason::new(game::full::Full::new());
 
     /// The list of [Crossover]'s that the algorithm can choose from, along with the
     /// frequency of use.
@@ -83,11 +81,16 @@ pub mod config {
 
     /// All of the [FitnessFunction]'s used to score a [Candidate].
     pub const FITNESS_CONFIG: FitnessConfig = FitnessConfig::new(&[
-        FitnessFunction::Distance(fitness::distance::Distance::new(7)),
+        FitnessFunction::Distance(fitness::distance::Distance::new(
+            7,
+            schedule_data::DISTANCE_BEFORE,
+            [usize::MAX; NSYMS],
+        )),
         FitnessFunction::ColorCount(fitness::color_count::ColorCount::new(
             schedule_data::NCOLORS,
             schedule_data::CHROMOSONE_COLORS,
             schedule_data::COLOR_PREFS,
+            &schedule_data::COLOR_NAMES,
         )),
         FitnessFunction::WeightedCount(fitness::weighted_count::WeightedCount::new(
             schedule_data::MAX_WEIGHT,
@@ -119,15 +122,13 @@ pub mod config {
     pub const LENGTH: usize = 5;
     pub const TABOO_DISTANCE: usize = 1;
 
-    pub const SYMBOL_NAMES: [&str; NSYMS] = ["Jack", "Jill", "Jane"];
-
     pub const CROSSOVER_CONFIG: CrossoverConfig = CrossoverConfig::new(&[(1, Crossover::Null)]);
 
     pub const MUTATION_CONFIG: MutationConfig =
         MutationConfig::new(&[(1, Mutation::Mutate(mutation::mutate::Mutate::new(1)))]);
 
     pub const FITNESS_CONFIG: FitnessConfig = FitnessConfig::new(&[FitnessFunction::Distance(
-        fitness::distance::Distance::new(7),
+        fitness::distance::Distance::new(7, [usize::MAX; 3], [usize::MAX; 3]),
     )]);
 
     pub const CONSTRAINT_CONFIG: ConstraintConfig = ConstraintConfig::new(&[]);

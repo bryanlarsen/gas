@@ -98,7 +98,7 @@ mod tests {
             &Candidate::from_chromosone([0, 0, 1, 0, 1]),
             &Candidate {
                 chromosone: [0, 0, 1, 0, 1],
-                scores: [1.0, 1.5, 1.0, 2.0, 2.0, 2.0, f64::NAN, f64::NAN, 2.0],
+                scores: FitnessFunction::scores(&[0, 0, 1, 0, 1]),
                 violations: 0,
             },
         );
@@ -153,17 +153,7 @@ mod tests {
             &Candidate::new(&mut r),
             &Candidate {
                 chromosone: [2, 2, 2, 2, 2],
-                scores: [
-                    f64::NAN,
-                    f64::NAN,
-                    2.0,
-                    f64::NAN,
-                    f64::NAN,
-                    2.0,
-                    1.0,
-                    1.0,
-                    0.25,
-                ],
+                scores: FitnessFunction::scores(&[2, 2, 2, 2, 2]),
                 violations: 0,
             },
         );

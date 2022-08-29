@@ -1,4 +1,4 @@
-use crate::config::config::MUTATION_CONFIG;
+use crate::config::default::MUTATION_CONFIG;
 
 pub mod mutate;
 pub mod rotate;

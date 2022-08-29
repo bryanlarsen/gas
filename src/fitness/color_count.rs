@@ -1,4 +1,4 @@
-use crate::config::config::{LENGTH, NSYMS};
+use crate::config::default::{LENGTH, NSYMS};
 
 use array_init::array_init;
 

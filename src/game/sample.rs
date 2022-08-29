@@ -61,7 +61,7 @@ impl Game for Sample {
 mod tests {
     use super::*;
     const TRIES_PER_GAME: std::ops::Range<usize> = 1usize..4;
-    use crate::config::config::FITNESS_CONFIG;
+    use crate::config::default::FITNESS_CONFIG;
 
     #[test]
     fn test_game() {

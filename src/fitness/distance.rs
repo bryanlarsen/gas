@@ -1,4 +1,4 @@
-use crate::config::config::NSYMS;
+use crate::config::default::NSYMS;
 
 use array_init::array_init;
 
@@ -129,7 +129,7 @@ impl Distance {
                     }
                 });
                 let stdev = scores[g * 2 + 1];
-                descriptions.push(format!("{}x{}u, stdev: {}", min_count, minimum, stdev));
+                descriptions.push(format!("{}x{}u, stdev: {:.2}", min_count, minimum, stdev));
             } else {
                 descriptions.push("".to_string());
             }

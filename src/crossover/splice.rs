@@ -1,5 +1,5 @@
 use crate::candidate::Candidate;
-use crate::config::config::LENGTH;
+use crate::config::default::LENGTH;
 
 #[mockall_double::double]
 use crate::rando::Rando;

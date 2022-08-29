@@ -1,4 +1,4 @@
-use crate::config::config::LENGTH;
+use crate::config::default::LENGTH;
 
 use crate::candidate::Candidate;
 

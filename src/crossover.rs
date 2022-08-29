@@ -1,4 +1,4 @@
-use crate::config::config::CROSSOVER_CONFIG;
+use crate::config::default::CROSSOVER_CONFIG;
 
 pub mod mix;
 pub mod splice;

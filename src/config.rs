@@ -1,12 +1,14 @@
-#[cfg(not(test))]
-pub mod config {
-    use crate::constraints::{self, Constraint, ConstraintConfig};
-    use crate::crossover::{self, Crossover, CrossoverConfig};
-    use crate::fitness::{self, FitnessConfig, FitnessFunction};
-    use crate::game;
-    use crate::mutation::{self, Mutation, MutationConfig};
-    use crate::tournaments;
+use crate::constraints::{self, Constraint, ConstraintConfig};
+use crate::crossover::{self, Crossover, CrossoverConfig};
+use crate::fitness::{self, FitnessConfig, FitnessFunction};
+use crate::game;
+use crate::mutation::{self, Mutation, MutationConfig};
+use crate::tournaments;
+use std::sync::{Arc, RwLock};
 
+#[cfg(not(test))]
+pub mod default {
+    use super::*;
     use crate::schedule_data;
 
     // schedule_data.rs is automatically generated, hoist symbols
@@ -110,13 +112,8 @@ pub mod config {
 }
 
 #[cfg(test)]
-pub mod config {
-    use crate::constraints::ConstraintConfig;
-    use crate::crossover::{Crossover, CrossoverConfig};
-    use crate::fitness::{self, FitnessConfig, FitnessFunction};
-    use crate::game;
-    use crate::mutation::{self, Mutation, MutationConfig};
-    use crate::tournaments;
+pub mod default {
+    use super::*;
 
     pub const NSYMS: usize = 3;
     pub const LENGTH: usize = 5;
@@ -135,4 +132,33 @@ pub mod config {
 
     pub const TOURNAMENT: tournaments::single_elimination::SingleElimination<game::full::Full> =
         tournaments::single_elimination::SingleElimination::new(game::full::Full::new());
+}
+
+pub struct Config {
+    pub fitness: FitnessConfig,
+    pub constraints: ConstraintConfig,
+}
+
+impl Config {
+    pub fn current() -> Arc<Config> {
+        CURRENT_CONFIG.with(|c| c.read().unwrap().clone())
+    }
+    pub fn make_current(self) {
+        assert_eq!(default::FITNESS_CONFIG.nscores, self.fitness.nscores);
+        assert_eq!(
+            default::FITNESS_CONFIG.nscores,
+            FitnessConfig::nscores(self.fitness.functions)
+        );
+        CURRENT_CONFIG.with(|c| *c.write().unwrap() = Arc::new(self))
+    }
+}
+
+thread_local! {
+    static CURRENT_CONFIG: RwLock<Arc<Config>> = RwLock::new(Arc::new(
+        Config {
+            fitness: default::FITNESS_CONFIG,
+            constraints: default::CONSTRAINT_CONFIG,
+        }
+    )
+    );
 }

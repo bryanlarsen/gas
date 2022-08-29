@@ -1,4 +1,4 @@
-use crate::config::config::TOURNAMENT;
+use crate::config::default::TOURNAMENT;
 
 use crate::candidate::Candidate;
 use crate::generation;
@@ -9,7 +9,7 @@ use crate::rando::Rando;
 
 use std::sync::{
     atomic::{AtomicBool, AtomicIsize, AtomicUsize, Ordering},
-    Arc,
+    Arc, RwLock,
 };
 
 #[cfg_attr(test, allow(dead_code))]
@@ -23,6 +23,8 @@ pub struct CycleProgress {
     pub violations: Arc<AtomicUsize>,
     /// out: continually updated with progress, values 0-100.   Does not increment until stagnation is detected.
     pub progress: Arc<AtomicUsize>,
+    /// out: copy of the top candidate
+    pub top: Arc<RwLock<Candidate>>,
     /// in: SIGINT or similar.  if set, cycle will finish and exit ASAP
     pub sigint: Arc<AtomicBool>,
 }
@@ -35,16 +37,21 @@ impl CycleProgress {
             score: Arc::new(AtomicIsize::new(0)),
             violations: Arc::new(AtomicUsize::new(0)),
             progress: Arc::new(AtomicUsize::new(0)),
+            top: Arc::new(RwLock::new(Candidate::from_chromosone(
+                [0; crate::config::default::LENGTH],
+            ))),
             sigint: Arc::clone(&sigint),
         }
     }
 
+    /// Arc::clone all the Arc's.
     pub fn clone(&self) -> CycleProgress {
         CycleProgress {
             iteration: Arc::clone(&self.iteration),
             score: Arc::clone(&self.score),
             violations: Arc::clone(&self.violations),
             progress: Arc::clone(&self.progress),
+            top: Arc::clone(&self.top),
             sigint: Arc::clone(&self.sigint),
         }
     }
@@ -119,6 +126,11 @@ pub fn cycle(
         progress
             .violations
             .store(population[0].violations, Ordering::Relaxed);
+
+        match progress.top.try_write() {
+            Err(_) => (),
+            Ok(mut l) => *l = population[0].clone(),
+        }
 
         if !stagnating {
             if ts > best_score {

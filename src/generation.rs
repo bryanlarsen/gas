@@ -1,6 +1,4 @@
-use crate::config::config::{
-    CROSSOVER_CONFIG, MUTATION_CONFIG, TABOO_DISTANCE, TOURNAMENT,
-};
+use crate::config::default::{CROSSOVER_CONFIG, MUTATION_CONFIG, TABOO_DISTANCE, TOURNAMENT};
 
 use crate::candidate::Candidate;
 use crate::tournaments::Tournament;
@@ -71,7 +69,7 @@ pub fn generation(population: &Vec<Candidate>, rng: &mut Rando) -> Vec<Candidate
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::config::{LENGTH, NSYMS,};
+    use crate::config::default::{LENGTH, NSYMS};
 
     use mockall::predicate;
 

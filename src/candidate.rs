@@ -1,4 +1,4 @@
-use crate::config::config::{FITNESS_CONFIG, LENGTH, NSYMS};
+use crate::config::default::{FITNESS_CONFIG, LENGTH, NSYMS};
 
 use crate::constraints::Constraint;
 use crate::fitness::FitnessFunction;

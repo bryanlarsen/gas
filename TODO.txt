@@ -1,0 +1,6 @@
+- parameters to [cycle] should be in a structure?
+- signal support
+- network topology
+- better tournament types
+- different tournament type for cycle vs runoff
+- replace more gen_range with uniform_iter

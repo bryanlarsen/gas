@@ -120,7 +120,7 @@ use tournaments::Tournament;
 #[cfg(not(test))]
 fn main() {
     use candidate::Candidate;
-    use config::config::*;
+    use config::default::*;
     use rando::Rando;
 
     use std::sync::{
@@ -167,6 +167,7 @@ fn main() {
         thread::sleep(std::time::Duration::from_millis(1000));
         for i in 0..THREADS {
             progresses[i].eprint();
+            eprintln!("{:?}", progresses[i].top.read().unwrap().chromosone);
         }
         eprintln!("");
         if handles.iter().all(|h| h.is_finished()) {

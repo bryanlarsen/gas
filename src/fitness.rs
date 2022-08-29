@@ -1,4 +1,4 @@
-use crate::config::config::FITNESS_CONFIG;
+use crate::config::{default, Config};
 pub mod color_count;
 pub mod distance;
 pub mod weighted_count;
@@ -28,7 +28,7 @@ pub enum FitnessFunction {
     WeightedCount(weighted_count::WeightedCount),
 }
 
-/// Create a const FITNESS_CONFIG with [FitnessConfig::new]
+/// Create a const FITNESS_CONFIG with [FitnessConfig::new] in config::default.
 pub struct FitnessConfig {
     pub functions: &'static [FitnessFunction],
     pub nscores: usize,
@@ -38,17 +38,20 @@ impl FitnessConfig {
     pub const fn new(functions: &'static [FitnessFunction]) -> FitnessConfig {
         FitnessConfig {
             functions,
-            nscores: {
-                // for and iter().fold() aren't yet usable in const fn
-                let mut sum = 0usize;
-                let mut i = 0usize;
-                while i < functions.len() {
-                    sum += functions[i].nscores();
-                    i += 1;
-                }
-                sum
-            },
+            nscores: FitnessConfig::nscores(functions),
         }
+    }
+
+    /// helper function, use [FitnessConfig::new]
+    pub const fn nscores(functions: &'static [FitnessFunction]) -> usize {
+        // for and iter().fold() aren't yet usable in const fn
+        let mut sum = 0usize;
+        let mut i = 0usize;
+        while i < functions.len() {
+            sum += functions[i].nscores();
+            i += 1;
+        }
+        sum
     }
 }
 
@@ -69,10 +72,10 @@ impl FitnessFunction {
         }
     }
 
-    pub fn scores(chromosone: &[usize]) -> [f64; FITNESS_CONFIG.nscores] {
-        let mut scores = [0f64; FITNESS_CONFIG.nscores];
+    pub fn scores(chromosone: &[usize]) -> [f64; default::FITNESS_CONFIG.nscores] {
+        let mut scores = [0f64; default::FITNESS_CONFIG.nscores];
         let mut i = 0;
-        for func in FITNESS_CONFIG.functions {
+        for func in Config::current().fitness.functions {
             let s = func.run(chromosone);
             scores[i..i + s.len()].copy_from_slice(&s);
             i += s.len();

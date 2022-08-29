@@ -289,7 +289,21 @@ pub const INVALID_POSITIONS: [[bool; LENGTH]; NSYMS] = [
 ];
 
 pub const SYMBOL_NAMES: [&str; NSYMS] = [
-    "9", "18", "26", "29", "31", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45",
+    "Jackson",
+    "teron",
+    "berkman",
+    "dmirsky",
+    "sully",
+    "holman",
+    "barnes",
+    "srenwick",
+    "smaclean",
+    "lhoney",
+    "Merziotis",
+    "rattan",
+    "Adea",
+    "Ryding",
+    "pearce",
 ];
 
 pub const LOCUS_NAMES: [&str; LENGTH] = [

@@ -1,4 +1,4 @@
-use crate::config::config::{LENGTH, NSYMS};
+use crate::config::default::{LENGTH, NSYMS};
 
 /**
 
@@ -47,7 +47,7 @@ impl WeightedCount {
                 }
             }
             let mean = (sum as f64) / (count as f64);
-            descriptions.push(mean.to_string());
+            descriptions.push(format!("{:.2}", mean));
         }
         descriptions
     }

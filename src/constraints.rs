@@ -1,4 +1,4 @@
-use crate::config::config::{CONSTRAINT_CONFIG, LENGTH};
+use crate::config::{default::LENGTH, Config};
 
 pub mod invalid_position;
 
@@ -22,7 +22,8 @@ impl Constraint {
     }
 
     pub fn violations(chromosone: &[usize; LENGTH]) -> usize {
-        CONSTRAINT_CONFIG
+        Config::current()
+            .constraints
             .constraints
             .iter()
             .fold(0usize, |sum, c| sum + c.run(chromosone))

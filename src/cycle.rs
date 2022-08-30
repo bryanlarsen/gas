@@ -184,5 +184,7 @@ pub fn cycle(
 
     // tournament phase
     let (winner, _) = TOURNAMENT.run(&winners, rng);
+    *progress.top.write().unwrap() = winner.clone();
+
     winner
 }

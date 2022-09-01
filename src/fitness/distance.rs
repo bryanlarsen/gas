@@ -1,13 +1,14 @@
-use crate::config::default::NSYMS;
+use super::FitnessFunction;
+use crate::chromosone::{self, Chromosone};
 
 use array_init::array_init;
 
 /**
 The Distance fitness scores discourage clumping of symbols in the chromosone and encourage identical symbols to spread out evenly.
 
-Two scores per gene are returned.  The first score is the negated standard deviation of the distances.  The standard deviation is negated since we optimize to larger numbers and we wish to optimize the standard deviation to zero.
+Two scores per gene are returned.  The second score is the negated standard deviation of the distances.  The standard deviation is negated since we optimize to larger numbers and we wish to optimize the standard deviation to zero.
 
-The second score is designed to discourage clumping.  There are two parts to this score: the integer part and the fractional part.   The integral part is the minimum distance.   The fractional part is the inverse of the number of distances at the minimum.   If the minimum distance is greater than the `max` parameter, `max+1` is returned as the clumping score.
+The first score is designed to discourage clumping.  There are two parts to this score: the integer part and the fractional part.   The integral part is the minimum distance.   The fractional part is the inverse of the number of distances at the minimum.   If the minimum distance is greater than the `max` parameter, `max+1` is returned as the clumping score.
 
 The first two scores returned are the stdev and clumping score for gene 0, the next two for gene 1, et cetera.
 
@@ -17,35 +18,37 @@ If the symbol does not occur at least twice in the chromosone (along with distan
 */
 pub struct Distance {
     pub max: usize,
-    pub distance_before: [usize; NSYMS],
-    pub distance_after: [usize; NSYMS],
+    pub distance_before: [usize; chromosone::NSYMS],
+    pub distance_after: [usize; chromosone::NSYMS],
+    pub weight_minimum: f64,
+    pub weight_stdev: f64,
 }
 
 impl Distance {
-    /// creates a new [`Distance`].  `max` constrains resulting scores.  For instance in a scheduling system if you consider that as long as shifts are at least a week apart further spacing is not an improvement, you could set `max` to 7 (assuming there's only one shift per day in the chromoone).
+    /// creates a new [`Distance`].  `max` constrains resulting scores.  For instance in a scheduling system if you consider that as long as shifts are at least a week apart further spacing is not an improvement, you could set `max` to 7 (assuming there's only one shift per day in the chromoone).   The weights are used in the [`FitnessFunction.weights`] function -- 1.0 is a reasonable value for both.
     pub const fn new(
         max: usize,
-        distance_before: [usize; NSYMS],
-        distance_after: [usize; NSYMS],
+        distance_before: [usize; chromosone::NSYMS],
+        distance_after: [usize; chromosone::NSYMS],
+        weight_minimum: f64,
+        weight_stdev: f64,
     ) -> Distance {
         Distance {
             max,
             distance_before,
             distance_after,
+            weight_minimum,
+            weight_stdev,
         }
     }
 
-    pub const fn nscores(&self) -> usize {
-        3 * NSYMS
-    }
-
-    pub fn distances(&self, chromosone: &[usize]) -> [Vec<usize>; NSYMS] {
-        let mut current_position: Vec<usize> = vec![usize::MAX; NSYMS];
-        let mut distances: [Vec<usize>; NSYMS] = array_init(|_| vec![]);
+    fn distances(&self, chromosone: &Chromosone) -> [Vec<usize>; chromosone::NSYMS] {
+        let mut current_position: Vec<usize> = vec![usize::MAX; chromosone::NSYMS];
+        let mut distances: [Vec<usize>; chromosone::NSYMS] = array_init(|_| vec![]);
 
         //calculate distances
         for pos in 0..chromosone.len() {
-            let g = chromosone[pos];
+            let g: usize = chromosone[pos].into();
             if current_position[g] == usize::MAX {
                 if self.distance_before[g] != usize::MAX {
                     distances[g].push(pos + self.distance_before[g]);
@@ -56,7 +59,7 @@ impl Distance {
             current_position[g] = pos;
         }
 
-        for g in 0..NSYMS {
+        for g in 0..chromosone::NSYMS {
             if self.distance_after[g] != usize::MAX {
                 if current_position[g] == usize::MAX {
                     if self.distance_before[g] != usize::MAX {
@@ -75,11 +78,26 @@ impl Distance {
         }
         distances
     }
+}
 
-    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
-        let mut scores: Vec<f64> = Vec::with_capacity(NSYMS * 3);
+impl FitnessFunction for Distance {
+    fn nscores(&self) -> usize {
+        2 * chromosone::NSYMS
+    }
+
+    fn weights(&self) -> Vec<f64> {
+        let mut weights = Vec::<f64>::with_capacity(self.nscores());
+        for _ in 0..chromosone::NSYMS {
+            weights.push(self.weight_minimum);
+            weights.push(self.weight_stdev);
+        }
+        weights
+    }
+
+    fn run(&self, chromosone: &Chromosone) -> Vec<f64> {
+        let mut scores: Vec<f64> = Vec::with_capacity(chromosone::NSYMS * 2);
         let distances = self.distances(chromosone);
-        for g in 0..NSYMS {
+        for g in 0..chromosone::NSYMS {
             if distances[g].len() > 0 {
                 let minimum = distances[g].iter().min().unwrap();
                 let min_count = distances[g].iter().fold(0usize, |count, d| {
@@ -114,11 +132,12 @@ impl Distance {
         }
         scores
     }
-    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
-        let mut descriptions = Vec::<String>::with_capacity(NSYMS);
+
+    fn describe(&self, chromosone: &Chromosone) -> Vec<String> {
+        let mut descriptions = Vec::<String>::with_capacity(chromosone::NSYMS);
         let scores = self.run(chromosone);
         let distances = self.distances(chromosone);
-        for g in 0..NSYMS {
+        for g in 0..chromosone::NSYMS {
             if distances[g].len() > 0 {
                 let minimum = distances[g].iter().min().unwrap();
                 let min_count = distances[g].iter().fold(0usize, |count, d| {
@@ -146,7 +165,7 @@ mod tests {
 
     #[test]
     fn test_distance() {
-        let d = Distance::new(7, [usize::MAX; 3], [usize::MAX; 3]);
+        let d = Distance::new(7, [usize::MAX; 3], [usize::MAX; 3], 1.0, 1.0);
         assert_scores_eq(
             &d.run(&[0, 0, 1, 0, 1]),
             &[
@@ -161,7 +180,7 @@ mod tests {
     }
     #[test]
     fn test_max() {
-        let d = Distance::new(1, [usize::MAX; 3], [usize::MAX; 3]);
+        let d = Distance::new(1, [usize::MAX; 3], [usize::MAX; 3], 1.0, 1.0);
         assert_scores_eq(
             &d.run(&[0, 0, 1, 0, 1]),
             &[
@@ -176,7 +195,7 @@ mod tests {
     }
     #[test]
     fn test_before_after() {
-        let d = Distance::new(99, [1, 2, 9], [1, 3, 9]);
+        let d = Distance::new(99, [1, 2, 9], [1, 3, 9], 1.0, 1.0);
         assert_scores_eq(
             &d.run(&[0, 0, 1, 0, 1]),
             &[

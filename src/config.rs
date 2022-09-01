@@ -1,10 +1,7 @@
-use crate::constraints::{self, Constraint, ConstraintConfig};
 use crate::crossover::{self, Crossover, CrossoverConfig};
-use crate::fitness::{self, FitnessConfig, FitnessFunction};
 use crate::game;
 use crate::mutation::{self, Mutation, MutationConfig};
 use crate::tournaments;
-use std::sync::{Arc, RwLock};
 
 #[cfg(not(test))]
 pub mod default {
@@ -80,7 +77,7 @@ pub mod default {
         (1, Mutation::Rotate(mutation::rotate::Rotate::new(2))),
         (1, Mutation::Rotate(mutation::rotate::Rotate::new(3))),
     ]);
-
+    /*
     /// All of the [FitnessFunction]'s used to score a [Candidate].
     pub const FITNESS_CONFIG: FitnessConfig = FitnessConfig::new(&[
         FitnessFunction::Distance(fitness::distance::Distance::new(
@@ -109,6 +106,7 @@ pub mod default {
         ConstraintConfig::new(&[Constraint::InvalidPosition(
             constraints::invalid_position::InvalidPosition::new(schedule_data::INVALID_POSITIONS),
         )]);
+    */
 }
 
 #[cfg(test)]
@@ -134,6 +132,7 @@ pub mod default {
         tournaments::single_elimination::SingleElimination::new(game::full::Full::new());
 }
 
+/*
 pub struct Config {
     pub fitness: FitnessConfig,
     pub constraints: ConstraintConfig,
@@ -162,3 +161,4 @@ thread_local! {
     )
     );
 }
+*/

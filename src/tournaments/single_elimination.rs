@@ -58,12 +58,14 @@ impl<G: Game> Tournament for SingleElimination<G> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gas::Gas;
 
     #[test]
     fn test_single_elimination_tournament() {
+        let gas = Gas::dut();
         let pop = &vec![
-            Candidate::from_chromosone([1, 0, 1, 0, 1]),
-            Candidate::from_chromosone([0, 0, 1, 0, 1]),
+            Candidate::from_chromosone(&gas, [1, 0, 1, 0, 1]),
+            Candidate::from_chromosone(&gas, [0, 0, 1, 0, 1]),
         ];
         let mut r = Rando::default();
         r.expect_shuffle().times(1).return_const(());
@@ -76,10 +78,11 @@ mod tests {
 
     #[test]
     fn test_bye() {
+        let gas = Gas::dut();
         let pop = &vec![
-            Candidate::from_chromosone([1, 0, 1, 0, 1]),
-            Candidate::from_chromosone([0, 0, 1, 0, 1]),
-            Candidate::from_chromosone([0, 1, 2, 0, 1]),
+            Candidate::from_chromosone(&gas, [1, 0, 1, 0, 1]),
+            Candidate::from_chromosone(&gas, [0, 0, 1, 0, 1]),
+            Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
         ];
         let mut r = Rando::default();
         r.expect_shuffle().times(1).return_const(());

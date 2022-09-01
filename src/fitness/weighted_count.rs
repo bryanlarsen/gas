@@ -1,4 +1,5 @@
-use crate::config::default::{LENGTH, NSYMS};
+use super::FitnessFunction;
+use crate::chromosone::{self, Chromosone};
 
 /**
 
@@ -7,41 +8,50 @@ If each symbol has preferred locations in the chromosone, this may be expressed 
 */
 pub struct WeightedCount {
     pub max_weight: usize,
-    pub weights: [[usize; LENGTH]; NSYMS],
+    pub weights: [[usize; chromosone::LENGTH]; chromosone::NSYMS],
 }
 
 impl WeightedCount {
     /// see [`WeightedCount`].   `max_weight` is the maximum value for a weight.   [`WeightedCount`] will return `max_weight` scores for each symbol, so you likely want to set `max_weight` to a small number, like 1 or 3.
-    pub const fn new(max_weight: usize, weights: [[usize; LENGTH]; NSYMS]) -> WeightedCount {
+    pub const fn new(
+        max_weight: usize,
+        weights: [[usize; chromosone::LENGTH]; chromosone::NSYMS],
+    ) -> WeightedCount {
         WeightedCount {
             max_weight,
             weights,
         }
     }
+}
 
-    pub const fn nscores(&self) -> usize {
-        self.max_weight * NSYMS
+impl FitnessFunction for WeightedCount {
+    fn nscores(&self) -> usize {
+        self.max_weight * chromosone::NSYMS
     }
 
-    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
-        let mut scores: Vec<f64> = vec![0f64; NSYMS * self.max_weight];
+    fn weights(&self) -> Vec<f64> {
+        return vec![1.0; self.nscores()];
+    }
+
+    fn run(&self, chromosone: &Chromosone) -> Vec<f64> {
+        let mut scores: Vec<f64> = vec![0f64; self.nscores()];
 
         for i in 0..chromosone.len() {
-            for w in 0..self.weights[chromosone[i]][i] {
-                scores[chromosone[i] * self.max_weight + w] += 1.0;
+            for w in 0..self.weights[chromosone[i] as usize][i] {
+                scores[chromosone[i] as usize * self.max_weight + w as usize] += 1.0;
             }
         }
 
         scores
     }
 
-    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
-        let mut descriptions = Vec::<String>::with_capacity(NSYMS);
-        for g in 0..NSYMS {
+    fn describe(&self, chromosone: &Chromosone) -> Vec<String> {
+        let mut descriptions = Vec::<String>::with_capacity(chromosone::NSYMS);
+        for g in 0..chromosone::NSYMS {
             let mut count = 0usize;
             let mut sum = 0usize;
             for i in 0..chromosone.len() {
-                if chromosone[i] == g {
+                if chromosone[i] as usize == g {
                     count += 1;
                     sum += self.weights[g][i];
                 }

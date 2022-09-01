@@ -61,7 +61,6 @@ impl Game for Sample {
 mod tests {
     use super::*;
     const TRIES_PER_GAME: std::ops::Range<usize> = 1usize..4;
-    use crate::config::default::FITNESS_CONFIG;
 
     #[test]
     fn test_game() {
@@ -71,7 +70,7 @@ mod tests {
             .times(1)
             .return_const(1usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..FITNESS_CONFIG.nscores))
+            .with(predicate::eq(0..9))
             .times(1)
             .return_const(2usize);
         let g = Sample::new(TRIES_PER_GAME);
@@ -80,12 +79,12 @@ mod tests {
             g.run(
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: vec![0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
                 &mut r
@@ -102,12 +101,12 @@ mod tests {
             g.run(
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: vec![0.0, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 2,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 1,
                 },
                 &mut r
@@ -123,7 +122,7 @@ mod tests {
             .times(1)
             .return_const(1usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..FITNESS_CONFIG.nscores))
+            .with(predicate::eq(0..9))
             .times(11)
             .return_const(2usize);
         let g = Sample::new(TRIES_PER_GAME);
@@ -132,12 +131,12 @@ mod tests {
             g.run(
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
                 &Candidate {
                     chromosone: [0, 0, 0, 0, 0],
-                    scores: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    scores: vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
                 &mut r

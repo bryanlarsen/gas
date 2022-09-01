@@ -1,7 +1,8 @@
-use crate::config::{default, Config};
 pub mod color_count;
 pub mod distance;
 pub mod weighted_count;
+
+use crate::chromosone::Chromosone;
 
 /**
 *  A FitnessFunction returns a set of fitness scores when passed a chromosone.
@@ -18,33 +19,32 @@ pub mod weighted_count;
 *  a tie.
 *
 *  Implementations: [color_count::ColorCount], [distance::Distance], [weighted_count::WeightedCount]
-*/
+ */
 
-pub enum FitnessFunction {
-    #[cfg_attr(test, allow(dead_code))]
-    ColorCount(color_count::ColorCount),
-    Distance(distance::Distance),
-    #[cfg_attr(test, allow(dead_code))]
-    WeightedCount(weighted_count::WeightedCount),
+pub trait FitnessFunction {
+    /// returns a vector of floats where bigger numbers are better.   If your fitness function works better with 0 better, remember that 0 is the biggest negative number.  NaN is also a valid score, and means that the score cannot be compared and is considered a tie with any other number.
+    fn run(&self, chromosone: &Chromosone) -> Vec<f64>;
+    /// helpful for tuning but not necessary, so feel free to return an empty vector
+    fn describe(&self, chromosone: &Chromosone) -> Vec<String>;
+    fn nscores(&self) -> usize;
+    /// not all games take weights into account, but some do.  Weights are small positive numbers, and the vector must be [nscores()] long.
+    fn weights(&self) -> Vec<f64>;
 }
 
-/// Create a const FITNESS_CONFIG with [FitnessConfig::new] in config::default.
 pub struct FitnessConfig {
-    pub functions: &'static [FitnessFunction],
+    pub functions: Vec<Box<dyn FitnessFunction + Sync + Send>>,
     pub nscores: usize,
 }
 
 impl FitnessConfig {
-    pub const fn new(functions: &'static [FitnessFunction]) -> FitnessConfig {
-        FitnessConfig {
-            functions,
-            nscores: FitnessConfig::nscores(functions),
-        }
+    pub fn new(functions: Vec<Box<dyn FitnessFunction + Sync + Send>>) -> FitnessConfig {
+        let nscores = FitnessConfig::nscores(&functions);
+        FitnessConfig { functions, nscores }
     }
 
     /// helper function, use [FitnessConfig::new]
-    pub const fn nscores(functions: &'static [FitnessFunction]) -> usize {
-        // for and iter().fold() aren't yet usable in const fn
+    fn nscores(functions: &Vec<Box<dyn FitnessFunction + Sync + Send>>) -> usize {
+        // this used to be a const fn, that's why we don't use for or iter.
         let mut sum = 0usize;
         let mut i = 0usize;
         while i < functions.len() {
@@ -53,42 +53,21 @@ impl FitnessConfig {
         }
         sum
     }
-}
 
-impl FitnessFunction {
-    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
-        match self {
-            FitnessFunction::ColorCount(ff) => ff.run(chromosone),
-            FitnessFunction::Distance(ff) => ff.run(chromosone),
-            FitnessFunction::WeightedCount(ff) => ff.run(chromosone),
-        }
-    }
-
-    pub const fn nscores(&self) -> usize {
-        match self {
-            FitnessFunction::ColorCount(ff) => ff.nscores(),
-            FitnessFunction::Distance(ff) => ff.nscores(),
-            FitnessFunction::WeightedCount(ff) => ff.nscores(),
-        }
-    }
-
-    pub fn scores(chromosone: &[usize]) -> [f64; default::FITNESS_CONFIG.nscores] {
-        let mut scores = [0f64; default::FITNESS_CONFIG.nscores];
-        let mut i = 0;
-        for func in Config::current().fitness.functions {
-            let s = func.run(chromosone);
-            scores[i..i + s.len()].copy_from_slice(&s);
-            i += s.len();
+    pub fn scores(&self, chromosone: &Chromosone) -> Vec<f64> {
+        let mut scores = Vec::<f64>::with_capacity(self.nscores);
+        for func in self.functions.iter() {
+            scores.append(&mut func.run(chromosone));
         }
         scores
     }
 
-    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
-        match self {
-            FitnessFunction::ColorCount(ff) => ff.describe(chromosone),
-            FitnessFunction::Distance(ff) => ff.describe(chromosone),
-            FitnessFunction::WeightedCount(ff) => ff.describe(chromosone),
+    pub fn describe(&self, chromosone: &Chromosone) -> Vec<Vec<String>> {
+        let mut descriptions = Vec::<Vec<String>>::new();
+        for func in self.functions.iter() {
+            descriptions.push(func.describe(chromosone));
         }
+        descriptions
     }
 }
 

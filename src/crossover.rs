@@ -1,70 +1,60 @@
-use crate::config::default::CROSSOVER_CONFIG;
-
 pub mod mix;
+pub mod null;
 pub mod splice;
 
-use crate::candidate::Candidate;
+use crate::chromosone::Chromosone;
 
 #[mockall_double::double]
 use crate::rando::Rando;
 
-pub enum Crossover {
-    Null,
-    #[cfg_attr(test, allow(dead_code))]
-    Mix(mix::Mix),
-    #[cfg_attr(test, allow(dead_code))]
-    Splice(splice::Splice),
+/**
+*  An operator that given two chromosones, produces a third.   Aka breeding.
+**/
+pub trait Crossover {
+    fn run(&self, left: &Chromosone, right: &Chromosone, rng: &mut Rando) -> Chromosone;
 }
 
-impl Crossover {
-    pub fn run(&self, left: &Candidate, right: &Candidate, rng: &mut Rando) -> Candidate {
-        match self {
-            Crossover::Null => left.clone(),
-            Crossover::Mix(co) => co.run(left, right, rng),
-            Crossover::Splice(co) => co.run(left, right, rng),
-        }
-    }
+pub struct CrossoverIter<'a> {
+    i: usize,
+    config: &'a CrossoverConfig,
 }
 
-pub struct CrossoverIter {
-    pub i: usize,
-    pub indexes: Vec<usize>,
-}
+impl<'a> Iterator for CrossoverIter<'a> {
+    type Item = &'a Box<dyn Crossover + Sync + Send>;
 
-impl Iterator for CrossoverIter {
-    type Item = &'static Crossover;
-
-    fn next(&mut self) -> Option<&'static Crossover> {
+    fn next(&mut self) -> Option<&'a Box<dyn Crossover + Sync + Send>> {
         self.i += 1;
-        if self.i >= self.indexes.len() {
+        if self.i >= self.config.indices.len() {
             self.i = 0;
         }
-        Some(&CROSSOVER_CONFIG.crossovers_with_weights[self.indexes[self.i]].1)
+        Some(&self.config.crossovers_with_weights[self.config.indices[self.i]].1)
     }
 }
 
 pub struct CrossoverConfig {
-    crossovers_with_weights: &'static [(usize, Crossover)],
+    pub crossovers_with_weights: Vec<(usize, Box<dyn Crossover + Sync + Send>)>,
+    pub indices: Vec<usize>,
 }
 
 impl CrossoverConfig {
-    pub const fn new(crossovers_with_weights: &'static [(usize, Crossover)]) -> CrossoverConfig {
+    pub fn new(
+        crossovers_with_weights: Vec<(usize, Box<dyn Crossover + Sync + Send>)>,
+    ) -> CrossoverConfig {
+        let weights = crossovers_with_weights
+            .iter()
+            .map(|c| c.0)
+            .collect::<Vec<usize>>();
+        let indices = crate::helpers::multidimensional_bresenhams(&weights);
         CrossoverConfig {
+            indices,
             crossovers_with_weights,
         }
     }
 
     pub fn iter(&self) -> CrossoverIter {
-        let weights = self
-            .crossovers_with_weights
-            .iter()
-            .map(|c| c.0)
-            .collect::<Vec<usize>>();
-        // FIXME.  "indexes" should be const or lazy_static or something rather than being recalculated every time here.   const is best -- multidimensional_bresenhams could theoretically be const, but Vec can't be const and it's hard to rejigger to use something other than Vec.
-        let indexes = crate::helpers::multidimensional_bresenhams(&weights);
         CrossoverIter {
-            i: indexes.len(),
-            indexes,
+            i: self.indices.len(),
+            config: self,
         }
     }
 }

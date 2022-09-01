@@ -1,6 +1,6 @@
+pub mod full_season;
 pub mod scale;
 pub mod single_elimination;
-pub mod full_season;
 
 use crate::candidate::Candidate;
 

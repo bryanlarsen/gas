@@ -1,5 +1,6 @@
 use super::Gas;
 use crate::candidate::Candidate;
+use crate::chromosone;
 
 #[mockall_double::double]
 use crate::rando::Rando;
@@ -28,14 +29,15 @@ pub struct CycleProgress {
 
 #[cfg_attr(test, allow(dead_code))]
 impl CycleProgress {
-    pub fn new(sigint: &Arc<AtomicBool>) -> CycleProgress {
+    pub fn new(gas: &Gas, sigint: &Arc<AtomicBool>) -> CycleProgress {
         CycleProgress {
             iteration: Arc::new(AtomicUsize::new(0)),
             score: Arc::new(AtomicIsize::new(0)),
             violations: Arc::new(AtomicUsize::new(0)),
             progress: Arc::new(AtomicUsize::new(0)),
             top: Arc::new(RwLock::new(Candidate::from_chromosone(
-                [0; crate::config::default::LENGTH],
+                gas,
+                [0; chromosone::LENGTH],
             ))),
             sigint: Arc::clone(&sigint),
         }
@@ -67,7 +69,8 @@ impl CycleProgress {
 /**
  * Given a population, run multiple [generation::generation]'s of the algorithm until it stagnates and then return the winner.
  *
- * This function is designed to be run in a thread, so it updates its progress in the iteration, score and progress atomics.
+ * This function is designed to be run in a thread, it keeps the [CycleProgress]
+ * structure updated which allows the function to be monitored on the fly.
  *
  * Algorithm:
  *
@@ -112,12 +115,12 @@ impl Gas {
         const SAMPLING_LENGTH: usize = 3;
 
         // seed so on sigint it's not empty
-        winners.push(population[0]);
+        winners.push(population[0].clone());
 
         for i in 0..(2 << 20) {
             progress.iteration.store(i, Ordering::Relaxed);
 
-            *population = generation::generation(population, rng);
+            *population = self.generation(population, rng);
 
             let ts = population[0].total_score();
             progress.score.store(ts.round() as isize, Ordering::Relaxed);
@@ -133,7 +136,7 @@ impl Gas {
             if !stagnating {
                 if ts > best_score {
                     best_score = ts;
-                    winners[0] = population[0];
+                    winners[0] = population[0].clone();
                 }
 
                 ema99 = ema99 * EMA_FAST_CONST + ts * (1.0 - EMA_FAST_CONST);
@@ -148,7 +151,7 @@ impl Gas {
                 if ema99 < ema999 && n_cur_violations > VIOLATIONS_STAGNATION_THRESHOLD {
                     stagnating = true;
                     stagnation_iteration = i;
-                    winners.push(population[0]);
+                    winners.push(population[0].clone());
                 }
             } else {
                 if ts > best_score {
@@ -156,7 +159,7 @@ impl Gas {
                         .iter()
                         .any(|c| c.chromosone == population[0].chromosone)
                     {
-                        winners.push(population[0]);
+                        winners.push(population[0].clone());
                         if winners.len() >= population.len() {
                             break;
                         }
@@ -181,7 +184,7 @@ impl Gas {
         }
 
         // tournament phase
-        let (winner, _) = TOURNAMENT.run(&winners, rng);
+        let (winner, _) = self.final_tournament.run(&winners, rng);
         *progress.top.write().unwrap() = winner.clone();
 
         winner

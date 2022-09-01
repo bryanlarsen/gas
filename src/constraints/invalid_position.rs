@@ -1,4 +1,5 @@
-use crate::config::default::{LENGTH, NSYMS};
+use super::Constraint;
+use crate::chromosone::{self, Chromosone};
 
 /**
 
@@ -7,18 +8,22 @@ This constraint allows the specification of which positions in the chromosone ar
  */
 
 pub struct InvalidPosition {
-    pub invalid_positions: [[bool; LENGTH]; NSYMS],
+    pub invalid_positions: [[bool; chromosone::LENGTH]; chromosone::NSYMS],
 }
 
 impl InvalidPosition {
-    pub const fn new(invalid_positions: [[bool; LENGTH]; NSYMS]) -> InvalidPosition {
+    pub const fn new(
+        invalid_positions: [[bool; chromosone::LENGTH]; chromosone::NSYMS],
+    ) -> InvalidPosition {
         InvalidPosition { invalid_positions }
     }
+}
 
-    pub fn run(&self, chromosone: &[usize; LENGTH]) -> usize {
+impl Constraint for InvalidPosition {
+    fn run(&self, chromosone: &Chromosone) -> usize {
         let mut violations: usize = 0;
-        for i in 0..LENGTH {
-            if self.invalid_positions[chromosone[i]][i] {
+        for (i, g) in chromosone.iter().enumerate() {
+            if self.invalid_positions[*g as usize][i] {
                 violations += 1;
             }
         }

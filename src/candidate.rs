@@ -1,29 +1,30 @@
-use crate::config::default::{FITNESS_CONFIG, LENGTH, NSYMS};
-
-use crate::constraints::Constraint;
-use crate::fitness::FitnessFunction;
+use crate::chromosone::{self, Chromosone};
+use crate::gas::Gas;
 
 #[cfg_attr(test, mockall_double::double)]
 use crate::rando::Rando;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Candidate {
-    pub chromosone: [usize; LENGTH],
-    pub scores: [f64; FITNESS_CONFIG.nscores],
+    pub chromosone: Chromosone,
+    pub scores: Vec<f64>,
     pub violations: usize,
 }
 
 impl Candidate {
-    pub fn from_chromosone(chromosone: [usize; LENGTH]) -> Candidate {
+    pub fn from_chromosone(gas: &Gas, chromosone: Chromosone) -> Candidate {
         Candidate {
             chromosone,
-            scores: FitnessFunction::scores(&chromosone),
-            violations: Constraint::violations(&chromosone),
+            scores: gas.fitness.scores(&chromosone),
+            violations: gas.constraints.violations(&chromosone),
         }
     }
 
-    pub fn new(rng: &mut Rando) -> Candidate {
-        Candidate::from_chromosone(array_init::array_init(|_| rng.gen_range(0..NSYMS)))
+    pub fn new(gas: &Gas, rng: &mut Rando) -> Candidate {
+        Candidate::from_chromosone(
+            gas,
+            array_init::array_init(|_| rng.gen_range(0..chromosone::NSYMS) as chromosone::Gene),
+        )
     }
 
     #[cfg_attr(test, allow(dead_code))]
@@ -51,13 +52,13 @@ impl Candidate {
             let mut map = std::collections::HashMap::<usize, usize>::new();
             let mut max_count = 0usize;
             for j in 0..population.len() {
-                let count = match map.get_mut(&population[j].chromosone[i]) {
+                let count = match map.get_mut(&population[j].chromosone[i].into()) {
                     Some(v) => {
                         *v += 1;
                         *v
                     }
                     None => {
-                        map.insert(population[j].chromosone[i], 1);
+                        map.insert(population[j].chromosone[i].into(), 1);
                         1usize
                     }
                 };
@@ -94,11 +95,12 @@ mod tests {
 
     #[test]
     fn test_candidate() {
+        let gas = Gas::dut();
         Candidate::assert_eq(
-            &Candidate::from_chromosone([0, 0, 1, 0, 1]),
+            &Candidate::from_chromosone(&gas, [0, 0, 1, 0, 1]),
             &Candidate {
                 chromosone: [0, 0, 1, 0, 1],
-                scores: FitnessFunction::scores(&[0, 0, 1, 0, 1]),
+                scores: gas.fitness.scores(&[0, 0, 1, 0, 1]),
                 violations: 0,
             },
         );
@@ -106,54 +108,56 @@ mod tests {
 
     #[test]
     fn test_similarity() {
+        let gas = Gas::dut();
         assert_eq!(
             Candidate::similarity(&[
-                Candidate::from_chromosone([0usize, 1, 2, 0, 1]),
-                Candidate::from_chromosone([0usize, 1, 2, 0, 1]),
-                Candidate::from_chromosone([0usize, 1, 2, 0, 1]),
+                Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
+                Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
+                Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
             ]),
             1.0
         );
         assert_eq!(
             Candidate::similarity(&[
-                Candidate::from_chromosone([0usize, 1, 2, 0, 1]),
-                Candidate::from_chromosone([1usize, 2, 0, 1, 2]),
-                Candidate::from_chromosone([2usize, 0, 1, 2, 0]),
+                Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
+                Candidate::from_chromosone(&gas, [1, 2, 0, 1, 2]),
+                Candidate::from_chromosone(&gas, [2, 0, 1, 2, 0]),
             ]),
             0.0
         );
         assert_eq!(
             Candidate::similarity(&[
-                Candidate::from_chromosone([0usize, 1, 2, 0, 1]),
-                Candidate::from_chromosone([1usize, 2, 0, 1, 2]),
-                Candidate::from_chromosone([0usize, 1, 2, 0, 1]),
+                Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
+                Candidate::from_chromosone(&gas, [1, 2, 0, 1, 2]),
+                Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1]),
             ]),
             0.5
         );
         assert_eq!(
-            Candidate::from_chromosone([0usize, 1, 2, 0, 1])
-                .distance(&Candidate::from_chromosone([1usize, 2, 0, 1, 2])),
+            Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1])
+                .distance(&Candidate::from_chromosone(&gas, [1, 2, 0, 1, 2])),
             5
         );
         assert_eq!(
-            Candidate::from_chromosone([0usize, 1, 2, 0, 1])
-                .distance(&Candidate::from_chromosone([0usize, 1, 2, 1, 2])),
+            Candidate::from_chromosone(&gas, [0, 1, 2, 0, 1])
+                .distance(&Candidate::from_chromosone(&gas, [0, 1, 2, 1, 2])),
             2
         );
     }
 
     #[test]
     fn test_new() {
+        let gas = Gas::dut();
         let mut r = Rando::default();
         r.expect_gen_range()
-            .with(predicate::eq(0..NSYMS))
-            .times(LENGTH)
+            .with(predicate::eq(0..chromosone::NSYMS))
+            .times(chromosone::LENGTH)
             .return_const(2usize);
         Candidate::assert_eq(
-            &Candidate::new(&mut r),
+            &Candidate::new(&gas, &mut r),
             &Candidate {
                 chromosone: [2, 2, 2, 2, 2],
-                scores: FitnessFunction::scores(&[2, 2, 2, 2, 2]),
+                scores: gas.fitness.scores(&[2, 2, 2, 2, 2]),
                 violations: 0,
             },
         );

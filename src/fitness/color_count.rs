@@ -1,6 +1,8 @@
-use crate::config::default::{LENGTH, NSYMS};
+use crate::chromosone::{self, Chromosone};
 
 use array_init::array_init;
+
+use super::FitnessFunction;
 
 /**
 
@@ -15,24 +17,23 @@ Parameters:
 */
 
 pub struct ColorCount {
-    pub chromosone_colors: [usize; LENGTH],
-    pub preferences: [&'static [usize]; NSYMS],
+    pub chromosone_colors: Vec<usize>,
+    pub preferences: Vec<Vec<usize>>,
     pub ncolors: usize,
     pub color_names: &'static [&'static str],
 }
 
 impl ColorCount {
     /// see [`ColorCount`] docs
-    pub const fn new(
+    pub fn new(
         ncolors: usize,
-        chromosone_colors: [usize; LENGTH],
-        preferences: [&'static [usize]; NSYMS],
+        chromosone_colors: Vec<usize>,
+        preferences: Vec<Vec<usize>>,
         color_names: &'static [&'static str],
     ) -> ColorCount {
-        let mut i = 0;
-        while i < preferences.len() {
-            assert!(ncolors == preferences[i].len());
-            i += 1;
+        assert_eq!(chromosone_colors.len(), chromosone::LENGTH);
+        for prefs in preferences.iter() {
+            assert_eq!(ncolors, prefs.len());
         }
         ColorCount {
             ncolors,
@@ -41,26 +42,32 @@ impl ColorCount {
             color_names,
         }
     }
-    pub const fn nscores(&self) -> usize {
-        self.ncolors * NSYMS
-    }
 
-    pub fn count(&self, chromosone: &[usize]) -> [Vec<usize>; NSYMS] {
-        let mut counts: [Vec<usize>; NSYMS] = array_init(|_| vec![0usize; self.ncolors]);
-        for i in 0..chromosone.len() {
+    fn count(&self, chromosone: &Chromosone) -> [Vec<usize>; chromosone::NSYMS] {
+        let mut counts: [Vec<usize>; chromosone::NSYMS] =
+            array_init(|_| vec![0usize; self.ncolors]);
+        for (i, sym) in chromosone.iter().enumerate() {
             let color = self.chromosone_colors[i];
-            let sym = chromosone[i];
-            counts[sym][color] += 1;
+            counts[*sym as usize][color] += 1;
         }
         counts
     }
+}
 
-    pub fn run(&self, chromosone: &[usize]) -> Vec<f64> {
-        assert_eq!(chromosone.len(), self.chromosone_colors.len());
-        let mut scores = Vec::<f64>::with_capacity(self.ncolors * NSYMS);
+impl FitnessFunction for ColorCount {
+    fn nscores(&self) -> usize {
+        self.ncolors * chromosone::NSYMS
+    }
+
+    fn weights(&self) -> Vec<f64> {
+        vec![1.0; self.nscores()]
+    }
+
+    fn run(&self, chromosone: &Chromosone) -> Vec<f64> {
+        let mut scores = Vec::<f64>::with_capacity(self.nscores());
         let counts = self.count(chromosone);
 
-        for m in 0..NSYMS {
+        for m in 0..chromosone::NSYMS {
             for n in 0..self.ncolors {
                 scores.push(-(counts[m][n].abs_diff(self.preferences[m][n]) as f64))
             }
@@ -69,11 +76,11 @@ impl ColorCount {
         scores
     }
 
-    pub fn describe(&self, chromosone: &[usize]) -> Vec<String> {
-        let mut descriptions = Vec::<String>::with_capacity(NSYMS);
+    fn describe(&self, chromosone: &Chromosone) -> Vec<String> {
+        let mut descriptions = Vec::<String>::with_capacity(chromosone::NSYMS);
         let counts = self.count(chromosone);
 
-        for m in 0..NSYMS {
+        for m in 0..chromosone::NSYMS {
             descriptions.push(
                 (0..self.ncolors)
                     .map(|n| {
@@ -99,8 +106,8 @@ mod tests {
     fn test_color_count() {
         let cc = ColorCount::new(
             2,
-            [0, 1, 0, 1, 0],
-            [&[1, 1], &[0, 0], &[2, 2]],
+            vec![0, 1, 0, 1, 0],
+            vec![vec![1, 1], vec![0, 0], vec![2, 2]],
             &["weekday", "weekend"],
         );
         let scores = cc.run(&[0, 0, 0, 1, 1]);

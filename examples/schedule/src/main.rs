@@ -35,14 +35,20 @@ fn main() {
                     .map(|a| a.to_vec())
                     .collect(),
                 &schedule_data::COLOR_NAMES,
+                1.0,
             )),
             Box::new(fitness::weighted_count::WeightedCount::new(
                 schedule_data::MAX_WEIGHT,
-                schedule_data::WEIGHTS,
+                schedule_data::WEIGHTS.iter().map(|v| v.to_vec()).collect(),
             )),
         ]),
         constraints: ConstraintConfig::new(vec![Box::new(
-            constraints::invalid_position::InvalidPosition::new(schedule_data::INVALID_POSITIONS),
+            constraints::invalid_position::InvalidPosition::new(
+                schedule_data::INVALID_POSITIONS
+                    .iter()
+                    .map(|v| v.to_vec())
+                    .collect(),
+            ),
         )]),
         cycle_tournament: Box::new(tournaments::scale::Scale::new(
             tournaments::single_elimination::SingleElimination::new(game::full::Full::new()),
@@ -86,7 +92,7 @@ fn main() {
         thread::sleep(std::time::Duration::from_millis(1000));
     }
 
-    let winner = pool.winner(gas);
+    let winner = pool.winner(gas.clone());
 
     println!("{{\"elapsed_ms\": {},", start.elapsed().as_millis());
     println!("  \"chromosone\":{:?},", winner.chromosone);
@@ -106,6 +112,6 @@ fn main() {
     println!(
         "  \"violations\":{}, \"score\":{}}}",
         winner.violations,
-        winner.total_score(),
+        winner.total_score(&gas.fitness.weights()),
     )
 }

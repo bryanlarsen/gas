@@ -2,7 +2,7 @@ use crate::chromosone::{self, Chromosone};
 
 use array_init::array_init;
 
-use super::FitnessFunction;
+use super::{FitnessFunction, FitnessName};
 
 /**
 
@@ -21,6 +21,7 @@ pub struct ColorCount {
     pub preferences: Vec<Vec<usize>>,
     pub ncolors: usize,
     pub color_names: &'static [&'static str],
+    pub weight: f64,
 }
 
 impl ColorCount {
@@ -30,6 +31,7 @@ impl ColorCount {
         chromosone_colors: Vec<usize>,
         preferences: Vec<Vec<usize>>,
         color_names: &'static [&'static str],
+        weight: f64,
     ) -> ColorCount {
         assert_eq!(chromosone_colors.len(), chromosone::LENGTH);
         for prefs in preferences.iter() {
@@ -40,6 +42,7 @@ impl ColorCount {
             chromosone_colors,
             preferences,
             color_names,
+            weight,
         }
     }
 
@@ -60,7 +63,7 @@ impl FitnessFunction for ColorCount {
     }
 
     fn weights(&self) -> Vec<f64> {
-        vec![1.0; self.nscores()]
+        vec![self.weight; self.nscores()]
     }
 
     fn run(&self, chromosone: &Chromosone) -> Vec<f64> {
@@ -76,6 +79,21 @@ impl FitnessFunction for ColorCount {
         scores
     }
 
+    fn names(&self) -> Vec<FitnessName> {
+        let mut names = Vec::<FitnessName>::with_capacity(self.nscores());
+        for m in 0..chromosone::NSYMS {
+            for n in 0..self.ncolors {
+                names.push(FitnessName {
+                    prefix: format!("{} {}", self.color_names[n], self.preferences[m][n]),
+                    gene: Some(m),
+                    locus: None,
+                });
+            }
+        }
+        names
+    }
+
+    /*
     fn describe(&self, chromosone: &Chromosone) -> Vec<String> {
         let mut descriptions = Vec::<String>::with_capacity(chromosone::NSYMS);
         let counts = self.count(chromosone);
@@ -95,7 +113,7 @@ impl FitnessFunction for ColorCount {
         }
 
         descriptions
-    }
+    } */
 }
 
 #[cfg(test)]
@@ -109,6 +127,7 @@ mod tests {
             vec![0, 1, 0, 1, 0],
             vec![vec![1, 1], vec![0, 0], vec![2, 2]],
             &["weekday", "weekend"],
+            1.0,
         );
         let scores = cc.run(&[0, 0, 0, 1, 1]);
         // sym0 has 2 0's and 1 1, preferring one of each.
@@ -118,5 +137,6 @@ mod tests {
             scores,
             vec![/*sym0*/ -1.0, 0.0, /*sym1*/ -1.0, -1.0, /*sym2*/ -2.0, -2.0]
         );
+        assert_eq!(cc.nscores(), scores.len());
     }
 }

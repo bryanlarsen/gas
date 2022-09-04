@@ -1,11 +1,12 @@
 use crate::candidate::Candidate;
 use crate::gas::cycle::CycleProgress;
 use crate::gas::Gas;
-use crate::rando::Rando;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
 
+#[mockall_double::double]
+use crate::rando::Rando;
 /**
 *  Run the algorithm on a set of populations simultaneously using multithreading.
 *
@@ -51,7 +52,9 @@ impl Pool {
     pub fn winner(&mut self, gas: Arc<Gas>) -> Candidate {
         let mut rng = Rando::new();
         let winners: Vec<Candidate> = self.handles.drain(..).map(|h| h.join().unwrap()).collect();
-        let (winner, _) = gas.final_tournament.run(&winners, &mut rng);
+        let (winner, _) = gas
+            .final_tournament
+            .run(&winners, &mut rng, &gas.fitness.weights());
         winner
     }
 }

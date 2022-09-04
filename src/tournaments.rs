@@ -8,7 +8,13 @@ use crate::candidate::Candidate;
 use crate::rando::Rando;
 
 /** A tournament ranks candidates.   It returns a winner plus a ranking for each candidate in the population, with higher numbers being better.
+*
  */
 pub trait Tournament {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> (Candidate, Vec<usize>);
+    fn run(
+        &self,
+        population: &Vec<Candidate>,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> (Candidate, Vec<usize>);
 }

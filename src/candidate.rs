@@ -29,8 +29,13 @@ impl Candidate {
 
     #[cfg_attr(test, allow(dead_code))]
     /// calculate an aggregate score.  The system doesn't use this internally, but it can be used for a very rough comparison between candidates.
-    pub fn total_score(&self) -> f64 {
-        self.scores.iter().filter(|s| !s.is_nan()).sum()
+    pub fn total_score(&self, weights: &Vec<f64>) -> f64 {
+        assert_eq!(self.scores.len(), weights.len());
+        self.scores
+            .iter()
+            .filter(|s| !s.is_nan())
+            .enumerate()
+            .fold(0.0, |total, (i, score)| total + weights[i] + score)
     }
 
     /// Hamming distance
@@ -96,14 +101,16 @@ mod tests {
     #[test]
     fn test_candidate() {
         let gas = Gas::dut();
+        let candidate = &Candidate::from_chromosone(&gas, [0, 0, 1, 0, 1]);
         Candidate::assert_eq(
-            &Candidate::from_chromosone(&gas, [0, 0, 1, 0, 1]),
+            &candidate,
             &Candidate {
                 chromosone: [0, 0, 1, 0, 1],
                 scores: gas.fitness.scores(&[0, 0, 1, 0, 1]),
                 violations: 0,
             },
         );
+        assert_eq!(candidate.scores.len(), gas.fitness.weights().len());
     }
 
     #[test]

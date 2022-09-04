@@ -9,23 +9,34 @@ use crate::crossover::Crossover;
 #[cfg(doc)]
 use crate::mutation::Mutation;
 
-/** Given one generation of candidates, create the next generation.   The heart of the GA.
-
-Each generation consists of the following steps:
-
-1. Run a [Tournament] to order the candidates.
-2. Loop for each new child:
-a.  Select two parents.  Parent selection is biased by [Tournament] score and prefers selecting dissimilar parents.
-b.  Choose a [Crossover] algorithm to run on the two parents to create a child.
-c.  Choose a [Mutation] algorithm to run on the child
- */
+/// Given one generation of candidates, create the next generation.   The heart of the GA.
+///
+/// Each generation consists of the following steps:
+///
+/// 1. Run a [Tournament] to order the candidates.
+/// 2. Loop for each new child:
+/// a.  Select two parents.  Parent selection is biased by [Tournament] score and prefers selecting dissimilar parents.
+/// b.  Choose a [Crossover] algorithm to run on the two parents to create a child.
+/// c.  Choose a [Mutation] algorithm to run on the child
+///
+/// These arguments could be calculated inside this function rather than
+/// outside, but are taken as parameters so they don't have to be recalculated
+/// every generation:
+///
+/// * [`rng`]: pass [`Rando::new()`]
+/// * [`score_weights`]: pass [`Gas.fitness.weights()`]
 
 impl Gas {
-    pub fn generation(&self, population: &Vec<Candidate>, rng: &mut Rando) -> Vec<Candidate> {
+    pub fn generation(
+        &self,
+        population: &Vec<Candidate>,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> Vec<Candidate> {
         let mut nextgen = Vec::<Candidate>::with_capacity(population.len());
 
         // tournament phase
-        let (winner, weights) = self.cycle_tournament.run(&population, rng);
+        let (winner, weights) = self.cycle_tournament.run(&population, rng, score_weights);
         nextgen.push(winner);
         let mut popdist = rng.weighted_iter(&weights);
 
@@ -96,7 +107,7 @@ mod tests {
             Candidate::from_chromosone(&gas, [0, 0, 0, 0, 0]),
             Candidate::from_chromosone(&gas, [1, 0, 1, 0, 1]),
         ];
-        let nextgen = gas.generation(&pop, &mut r);
+        let nextgen = gas.generation(&pop, &mut r, &vec![1.0; 9]);
         // second candidate has to win the tournament
         Candidate::assert_eq(
             &nextgen[0],

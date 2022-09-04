@@ -25,7 +25,13 @@ impl Sample {
 }
 
 impl Game for Sample {
-    fn run(&self, left: &Candidate, right: &Candidate, rng: &mut Rando) -> LeftRight {
+    fn run(
+        &self,
+        left: &Candidate,
+        right: &Candidate,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> LeftRight {
         if left.violations < right.violations {
             return LeftRight::Left;
         } else if left.violations > right.violations {
@@ -87,7 +93,8 @@ mod tests {
                     scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
-                &mut r
+                &mut r,
+                &vec![1.0; 9]
             )
         );
     }
@@ -109,7 +116,8 @@ mod tests {
                     scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 1,
                 },
-                &mut r
+                &mut r,
+                &vec![1.0; 9],
             )
         );
     }
@@ -139,7 +147,8 @@ mod tests {
                     scores: vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
-                &mut r
+                &mut r,
+                &vec![1.0; 9],
             )
         );
     }

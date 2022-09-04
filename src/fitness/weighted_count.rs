@@ -1,4 +1,4 @@
-use super::FitnessFunction;
+use super::{FitnessFunction, FitnessName};
 use crate::chromosone::{self, Chromosone};
 
 /**
@@ -8,15 +8,12 @@ If each symbol has preferred locations in the chromosone, this may be expressed 
 */
 pub struct WeightedCount {
     pub max_weight: usize,
-    pub weights: [[usize; chromosone::LENGTH]; chromosone::NSYMS],
+    pub weights: Vec<Vec<usize>>, //LENGTH; chromosone::NSYMS
 }
 
 impl WeightedCount {
     /// see [`WeightedCount`].   `max_weight` is the maximum value for a weight.   [`WeightedCount`] will return `max_weight` scores for each symbol, so you likely want to set `max_weight` to a small number, like 1 or 3.
-    pub const fn new(
-        max_weight: usize,
-        weights: [[usize; chromosone::LENGTH]; chromosone::NSYMS],
-    ) -> WeightedCount {
+    pub const fn new(max_weight: usize, weights: Vec<Vec<usize>>) -> WeightedCount {
         WeightedCount {
             max_weight,
             weights,
@@ -45,6 +42,20 @@ impl FitnessFunction for WeightedCount {
         scores
     }
 
+    fn names(&self) -> Vec<FitnessName> {
+        let mut names: Vec<FitnessName> = Vec::with_capacity(self.nscores());
+        for i in 0..chromosone::NSYMS {
+            for w in 0..self.max_weight {
+                names.push(FitnessName {
+                    prefix: format!("desirability{w}"),
+                    gene: Some(i),
+                    locus: None,
+                });
+            }
+        }
+        names
+    }
+    /*
     fn describe(&self, chromosone: &Chromosone) -> Vec<String> {
         let mut descriptions = Vec::<String>::with_capacity(chromosone::NSYMS);
         for g in 0..chromosone::NSYMS {
@@ -60,7 +71,7 @@ impl FitnessFunction for WeightedCount {
             descriptions.push(format!("{:.2}", mean));
         }
         descriptions
-    }
+    } */
 }
 #[cfg(test)]
 mod tests {
@@ -68,8 +79,16 @@ mod tests {
 
     #[test]
     fn test_weighted() {
-        let wc = WeightedCount::new(2, [[2, 2, 1, 1, 0], [1, 1, 2, 2, 0], [2, 2, 2, 2, 2]]);
+        let wc = WeightedCount::new(
+            2,
+            vec![
+                vec![2, 2, 1, 1, 0],
+                vec![1, 1, 2, 2, 0],
+                vec![2, 2, 2, 2, 2],
+            ],
+        );
         let scores = wc.run(&[0, 0, 0, 1, 1]);
         assert_eq!(scores, vec![3.0, 2.0, 1.0, 1.0, 0.0, 0.0]);
+        assert_eq!(wc.nscores(), scores.len());
     }
 }

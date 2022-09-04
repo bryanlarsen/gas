@@ -18,7 +18,12 @@ impl<G: Game> SingleElimination<G> {
 }
 
 impl<G: Game> Tournament for SingleElimination<G> {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> (Candidate, Vec<usize>) {
+    fn run(
+        &self,
+        population: &Vec<Candidate>,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> (Candidate, Vec<usize>) {
         let mut remaining: VecDeque<usize> = VecDeque::with_capacity(population.len());
         let mut wins = vec![0usize; population.len()];
 
@@ -38,7 +43,10 @@ impl<G: Game> Tournament for SingleElimination<G> {
             // we have to give anybody who gets a "bye" a win for the bye.
             wins[left] = wins[right];
 
-            match self.game.run(&population[left], &population[right], rng) {
+            match self
+                .game
+                .run(&population[left], &population[right], rng, score_weights)
+            {
                 game::LeftRight::Left => {
                     remaining.push_back(left);
                     wins[left] += 1;
@@ -71,7 +79,7 @@ mod tests {
         r.expect_shuffle().times(1).return_const(());
         let g = game::full::Full::new();
         let t = SingleElimination::new(g);
-        let (winner, weights) = t.run(&pop, &mut r);
+        let (winner, weights) = t.run(&pop, &mut r, &vec![1.0; 9]);
         assert_eq!(weights, [1, 0]);
         Candidate::assert_eq(&winner, &pop[0]);
     }
@@ -88,7 +96,7 @@ mod tests {
         r.expect_shuffle().times(1).return_const(());
         let g = game::full::Full::new();
         let t = SingleElimination::new(g);
-        let (winner, weights) = t.run(&pop, &mut r);
+        let (winner, weights) = t.run(&pop, &mut r, &vec![1.0; 9]);
         assert_eq!(weights, [1, 0, 2]);
         Candidate::assert_eq(&winner, &pop[2]);
     }

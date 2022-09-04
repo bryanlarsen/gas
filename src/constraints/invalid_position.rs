@@ -1,5 +1,5 @@
 use super::Constraint;
-use crate::chromosone::{self, Chromosone};
+use crate::chromosone::Chromosone;
 
 /**
 
@@ -8,13 +8,11 @@ This constraint allows the specification of which positions in the chromosone ar
  */
 
 pub struct InvalidPosition {
-    pub invalid_positions: [[bool; chromosone::LENGTH]; chromosone::NSYMS],
+    pub invalid_positions: Vec<Vec<bool>>, // chromosone::LENGTH; chromosone::NSYMS
 }
 
 impl InvalidPosition {
-    pub const fn new(
-        invalid_positions: [[bool; chromosone::LENGTH]; chromosone::NSYMS],
-    ) -> InvalidPosition {
+    pub const fn new(invalid_positions: Vec<Vec<bool>>) -> InvalidPosition {
         InvalidPosition { invalid_positions }
     }
 }
@@ -37,10 +35,10 @@ mod tests {
 
     #[test]
     fn test_invalid_position() {
-        let c = InvalidPosition::new([
-            [false, false, false, false, false],
-            [false, true, false, true, false],
-            [true, true, true, true, true],
+        let c = InvalidPosition::new(vec![
+            vec![false, false, false, false, false],
+            vec![false, true, false, true, false],
+            vec![true, true, true, true, true],
         ]);
         assert_eq!(c.run(&[0, 0, 0, 0, 0]), 0);
         assert_eq!(c.run(&[0, 1, 0, 0, 0]), 1);

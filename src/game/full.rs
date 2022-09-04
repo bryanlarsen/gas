@@ -18,26 +18,33 @@ impl Full {
 }
 
 impl Game for Full {
-    fn run(&self, left: &Candidate, right: &Candidate, rng: &mut Rando) -> LeftRight {
+    fn run(
+        &self,
+        left: &Candidate,
+        right: &Candidate,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> LeftRight {
         if left.violations < right.violations {
             return LeftRight::Left;
         } else if left.violations > right.violations {
             return LeftRight::Right;
         }
 
-        let pts =
-            left.scores
-                .iter()
-                .zip(right.scores.iter())
-                .fold((0usize, 0usize), |pts, scores| {
-                    if scores.0 > scores.1 {
-                        (pts.0 + 1, pts.1)
-                    } else if scores.1 > scores.0 {
-                        (pts.0, pts.1 + 1)
-                    } else {
-                        pts
-                    }
-                });
+        let pts = left
+            .scores
+            .iter()
+            .zip(right.scores.iter())
+            .enumerate()
+            .fold((0.0, 0.0), |pts, (i, scores)| {
+                if scores.0 > scores.1 {
+                    (pts.0 + score_weights[i], pts.1)
+                } else if scores.1 > scores.0 {
+                    (pts.0, pts.1 + score_weights[i])
+                } else {
+                    pts
+                }
+            });
 
         if pts.0 > pts.1 {
             LeftRight::Left
@@ -77,7 +84,31 @@ mod tests {
                     scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
-                &mut r
+                &mut r,
+                &vec![1.0; 9],
+            )
+        );
+    }
+
+    #[test]
+    fn test_game_weights() {
+        let mut r = Rando::default();
+        let g = Full::new();
+        assert_eq!(
+            LeftRight::Right,
+            g.run(
+                &Candidate {
+                    chromosone: [0, 0, 0, 0, 0],
+                    scores: vec![0.0, 0.1, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    violations: 0,
+                },
+                &Candidate {
+                    chromosone: [0, 0, 0, 0, 0],
+                    scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    violations: 0,
+                },
+                &mut r,
+                &vec![1.0, 1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
             )
         );
     }
@@ -99,7 +130,8 @@ mod tests {
                     scores: vec![0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 1,
                 },
-                &mut r
+                &mut r,
+                &vec![1.0; 9],
             )
         );
     }
@@ -125,7 +157,8 @@ mod tests {
                     scores: vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     violations: 0,
                 },
-                &mut r
+                &mut r,
+                &vec![1.0; 9],
             )
         );
     }

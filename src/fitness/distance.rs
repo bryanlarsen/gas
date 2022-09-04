@@ -1,4 +1,4 @@
-use super::FitnessFunction;
+use super::{FitnessFunction, FitnessName};
 use crate::chromosone::{self, Chromosone};
 
 use array_init::array_init;
@@ -133,6 +133,23 @@ impl FitnessFunction for Distance {
         scores
     }
 
+    fn names(&self) -> Vec<FitnessName> {
+        let mut names = Vec::<FitnessName>::with_capacity(self.nscores());
+        for g in 0..chromosone::NSYMS {
+            names.push(FitnessName {
+                prefix: "min distance".to_string(),
+                gene: Some(g),
+                locus: None,
+            });
+            names.push(FitnessName {
+                prefix: "distance std dev".to_string(),
+                gene: Some(g),
+                locus: None,
+            });
+        }
+        names
+    }
+    /*
     fn describe(&self, chromosone: &Chromosone) -> Vec<String> {
         let mut descriptions = Vec::<String>::with_capacity(chromosone::NSYMS);
         let scores = self.run(chromosone);
@@ -155,6 +172,7 @@ impl FitnessFunction for Distance {
         }
         descriptions
     }
+    */
 }
 
 #[cfg(test)]
@@ -166,8 +184,9 @@ mod tests {
     #[test]
     fn test_distance() {
         let d = Distance::new(7, [usize::MAX; 3], [usize::MAX; 3], 1.0, 1.0);
+        let scores = d.run(&[0, 0, 1, 0, 1]);
         assert_scores_eq(
-            &d.run(&[0, 0, 1, 0, 1]),
+            &scores,
             &[
                 1.0 + 1.0 / 1.0,
                 -(0.5 * 0.5 + 0.5 * 0.5) / 2.0,
@@ -177,6 +196,7 @@ mod tests {
                 f64::NAN,
             ],
         );
+        assert_eq!(d.nscores(), scores.len());
     }
     #[test]
     fn test_max() {

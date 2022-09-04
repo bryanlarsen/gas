@@ -16,12 +16,20 @@ impl<G: Game + Clone> FullSeason<G> {
 }
 
 impl<G: Game + Clone> Tournament for FullSeason<G> {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> (Candidate, Vec<usize>) {
+    fn run(
+        &self,
+        population: &Vec<Candidate>,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> (Candidate, Vec<usize>) {
         let mut wins = vec![0usize; population.len()];
 
         for left in 0..population.len() - 1 {
             for right in left + 1..population.len() {
-                match self.game.run(&population[left], &population[right], rng) {
+                match self
+                    .game
+                    .run(&population[left], &population[right], rng, score_weights)
+                {
                     game::LeftRight::Left => {
                         wins[left] += 1;
                     }
@@ -44,7 +52,7 @@ impl<G: Game + Clone> Tournament for FullSeason<G> {
         if winners.len() > 1 {
             (
                 SingleElimination::new(self.game.clone())
-                    .run(&winners, rng)
+                    .run(&winners, rng, score_weights)
                     .0,
                 wins,
             )
@@ -69,7 +77,7 @@ mod tests {
         let mut r = Rando::default();
         let g = game::full::Full::new();
         let t = FullSeason::new(g);
-        let (winner, weights) = t.run(&pop, &mut r);
+        let (winner, weights) = t.run(&pop, &mut r, &vec![1.0; 9]);
         assert_eq!(weights, [1, 0]);
         Candidate::assert_eq(&winner, &pop[0]);
     }

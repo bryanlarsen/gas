@@ -34,8 +34,13 @@ fn scale(weights: &mut [usize], constant: usize, scale: f64, exponent: f64) {
 }
 
 impl<T: Tournament> Tournament for Scale<T> {
-    fn run(&self, population: &Vec<Candidate>, rng: &mut Rando) -> (Candidate, Vec<usize>) {
-        let (winner, mut weights) = self.tournament.run(population, rng);
+    fn run(
+        &self,
+        population: &Vec<Candidate>,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> (Candidate, Vec<usize>) {
+        let (winner, mut weights) = self.tournament.run(population, rng, score_weights);
         scale(&mut weights, self.constant, self.scale, self.exponent);
         (winner, weights)
     }

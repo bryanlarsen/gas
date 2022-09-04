@@ -11,7 +11,7 @@ use std::sync::{
 };
 
 #[cfg_attr(test, allow(dead_code))]
-/** Communication between a [cycle] running in a thread and the main thread. */
+/** Communication between a [cycle] running in a thread and the main thread.   This allows the GA algorithm to be monitored during execution.  */
 pub struct CycleProgress {
     /// out: the number of iterations of the GA that have been run
     pub iteration: Arc<AtomicUsize>,
@@ -43,7 +43,7 @@ impl CycleProgress {
         }
     }
 
-    /// Arc::clone all the Arc's.
+    /// Arc::clone all the Arc's.   So like Arc::clone, doesn't actually clone the contents of the CycleProgress, just the wrapper.
     pub fn clone(&self) -> CycleProgress {
         CycleProgress {
             iteration: Arc::clone(&self.iteration),
@@ -87,8 +87,10 @@ impl Gas {
         progress: &mut CycleProgress,
         rng: &mut Rando,
     ) -> Candidate {
+        let score_weights = self.fitness.weights();
+
         // fast moving average of score.  Stagnation of score is defined as when this goes below the slow moving average.
-        let mut ema99 = population[0].total_score();
+        let mut ema99 = population[0].total_score(&score_weights);
         // slow moving average of score
         let mut ema999 = ema99;
         // number of violations of current winner
@@ -120,9 +122,9 @@ impl Gas {
         for i in 0..(2 << 20) {
             progress.iteration.store(i, Ordering::Relaxed);
 
-            *population = self.generation(population, rng);
+            *population = self.generation(population, rng, &score_weights);
 
-            let ts = population[0].total_score();
+            let ts = population[0].total_score(&score_weights);
             progress.score.store(ts.round() as isize, Ordering::Relaxed);
             progress
                 .violations
@@ -184,7 +186,7 @@ impl Gas {
         }
 
         // tournament phase
-        let (winner, _) = self.final_tournament.run(&winners, rng);
+        let (winner, _) = self.final_tournament.run(&winners, rng, &score_weights);
         *progress.top.write().unwrap() = winner.clone();
 
         winner

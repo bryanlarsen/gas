@@ -29,14 +29,7 @@ impl Pool {
             let mut progress = CycleProgress::new(&igas, &sigint);
             progresses.push(progress.clone());
 
-            handles.push(thread::spawn(move || {
-                let mut population = Vec::<Candidate>::with_capacity(igas.population_size);
-                let mut rng = Rando::new();
-                for _ in 0..igas.population_size {
-                    population.push(Candidate::new(&igas, &mut rng));
-                }
-                igas.cycle(&mut population, &mut progress, &mut rng)
-            }));
+            handles.push(thread::spawn(move || igas.cycle(&mut progress)));
         }
         Pool {
             progresses,

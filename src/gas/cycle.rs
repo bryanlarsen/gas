@@ -25,6 +25,9 @@ pub struct CycleProgress {
     pub top: Arc<RwLock<Candidate>>,
     /// in: SIGINT or similar.  if set, cycle will finish and exit ASAP
     pub sigint: Arc<AtomicBool>,
+
+    pub seed_pool_size: Arc<AtomicUsize>,
+    pub diversity_violations: Arc<AtomicUsize>,
 }
 
 #[cfg_attr(test, allow(dead_code))]
@@ -35,6 +38,8 @@ impl CycleProgress {
             score: Arc::new(AtomicIsize::new(0)),
             violations: Arc::new(AtomicUsize::new(0)),
             progress: Arc::new(AtomicUsize::new(0)),
+            seed_pool_size: Arc::new(AtomicUsize::new(0)),
+            diversity_violations: Arc::new(AtomicUsize::new(0)),
             top: Arc::new(RwLock::new(Candidate::from_chromosone(
                 gas,
                 [0; chromosone::LENGTH],
@@ -50,6 +55,8 @@ impl CycleProgress {
             score: Arc::clone(&self.score),
             violations: Arc::clone(&self.violations),
             progress: Arc::clone(&self.progress),
+            seed_pool_size: Arc::clone(&self.seed_pool_size),
+            diversity_violations: Arc::clone(&self.diversity_violations),
             top: Arc::clone(&self.top),
             sigint: Arc::clone(&self.sigint),
         }
@@ -57,37 +64,50 @@ impl CycleProgress {
 
     pub fn eprint(&self) {
         eprint!(
-            "[{}: {}/{} {}%]\t",
+            "[{}: {}/{}/{}-{} {}%]\t",
             self.iteration.load(Ordering::Relaxed),
             self.score.load(Ordering::Relaxed),
             self.violations.load(Ordering::Relaxed),
+            self.seed_pool_size.load(Ordering::Relaxed),
+            self.diversity_violations.load(Ordering::Relaxed),
             self.progress.load(Ordering::Relaxed),
         );
     }
 }
 
 /**
- * Given a population, run multiple [generation::generation]'s of the algorithm until it stagnates and then return the winner.
- *
- * This function is designed to be run in a thread, it keeps the [CycleProgress]
- * structure updated which allows the function to be monitored on the fly.
- *
- * Algorithm:
- *
- * 1. Run the GA until both the score and number of violations has stagnated.
- * 2. Keep running the GA, doing a biased sampling of the winners until we've got enough samples or we've been doing this step for too long.
- * 3. Do a final tournament of the winners do get the grand winner, which we return.
- *
- */
+ ** Given a population, run multiple [generation::generation]'s of the algorithm until it stagnates and then return the winner.
+ **
+ ** This function is designed to be run in a thread, it keeps the [CycleProgress]
+ ** structure updated which allows the function to be monitored on the fly.
+ **
+ ** There are four phases to the algorithm.
+ **
+ ** 1. Seeding: Starting with a set of random candidates, iterate [`generation`] until the top
+ ** candidate either has zero constraint violations or the number of constraint
+ ** violations has stabilized. Add the candidate to the seed and then restart
+ ** with another set of random candidates. Repeat until you've accumulated
+ ** population_size number of seeds.
+ **
+ **  2. Running: Iterate [`generation`] until both the score and number of violations has stagnated.
+ **
+ ** 3. Stagnated: Keep running the GA, doing a biased sampling of the winners
+ ** until we've got enough samples or we've been doing this step for too long.
+ **
+ ** 4. Do a final tournament of the winners do get the grand winner, which we return.
+ **
+ **/
 impl Gas {
     #[cfg_attr(test, allow(dead_code))]
-    pub fn cycle(
-        &self,
-        population: &mut Vec<Candidate>,
-        progress: &mut CycleProgress,
-        rng: &mut Rando,
-    ) -> Candidate {
+    pub fn cycle(&self, progress: &mut CycleProgress) -> Candidate {
         let score_weights = self.fitness.weights();
+        let mut population = Vec::<Candidate>::with_capacity(self.population_size);
+        let mut rng = Rando::new();
+        let mut seed_pool = Vec::<Candidate>::new();
+
+        for _ in 0..self.population_size {
+            population.push(Candidate::new(self, &mut rng));
+        }
 
         // fast moving average of score.  Stagnation of score is defined as when this goes below the slow moving average.
         let mut ema99 = population[0].total_score(&score_weights);
@@ -97,8 +117,6 @@ impl Gas {
         let mut cur_violations = population[0].violations;
         // how long the number of violations has stayed stable.  Stagnation is defined as when this reaches VIOLATIONS_STAGNATION_THRESHOLD
         let mut n_cur_violations = 1;
-        // the state
-        let mut stagnating = false;
         // best score ever seen
         let mut best_score = 0f64;
         // a sampling of generation winners for the final tournament
@@ -116,13 +134,21 @@ impl Gas {
         /// usually we sample winners until we have population.len() samples, but we also stop if we've spent too long, defined here.  Is a multiple of the number of iterations before stagnation.
         const SAMPLING_LENGTH: usize = 3;
 
+        enum State {
+            Seeding,
+            Running,
+            Stagnated,
+        }
+        let mut state = State::Seeding;
+
         // seed so on sigint it's not empty
         winners.push(population[0].clone());
+        seed_pool.push(population[0].clone());
 
         for i in 0..(2 << 20) {
             progress.iteration.store(i, Ordering::Relaxed);
 
-            *population = self.generation(population, rng, &score_weights);
+            population = self.generation(&population, &mut rng, &score_weights);
 
             let ts = population[0].total_score(&score_weights);
             progress.score.store(ts.round() as isize, Ordering::Relaxed);
@@ -135,49 +161,88 @@ impl Gas {
                 Ok(mut l) => *l = population[0].clone(),
             }
 
-            if !stagnating {
-                if ts > best_score {
-                    best_score = ts;
-                    winners[0] = population[0].clone();
-                }
-
-                ema99 = ema99 * EMA_FAST_CONST + ts * (1.0 - EMA_FAST_CONST);
-                ema999 = ema999 * EMA_SLOW_CONST + ts * (1.0 - EMA_SLOW_CONST);
-
-                if cur_violations == population[0].violations {
-                    n_cur_violations += 1;
-                } else {
-                    cur_violations = population[0].violations;
-                    n_cur_violations = 1;
-                }
-                if ema99 < ema999 && n_cur_violations > VIOLATIONS_STAGNATION_THRESHOLD {
-                    stagnating = true;
-                    stagnation_iteration = i;
-                    winners.push(population[0].clone());
-                }
-            } else {
-                if ts > best_score {
-                    if !winners
-                        .iter()
-                        .any(|c| c.chromosone == population[0].chromosone)
+            match state {
+                State::Seeding => {
+                    if population[0].violations == 0
+                        || (n_cur_violations > VIOLATIONS_STAGNATION_THRESHOLD
+                            && population[0].violations <= seed_pool[0].violations)
                     {
-                        winners.push(population[0].clone());
-                        if winners.len() >= population.len() {
-                            break;
+                        if population[0].violations < seed_pool[0].violations {
+                            seed_pool.clear();
+                        }
+                        seed_pool.push(population[0].clone());
+                        if seed_pool.len() == self.population_size {
+                            population = seed_pool.clone();
+                            state = State::Running;
+                        } else {
+                            population.clear();
+                            for _ in 0..self.population_size {
+                                population.push(Candidate::new(self, &mut rng));
+                            }
+                            cur_violations = population[0].violations;
+                            n_cur_violations = 0;
+                        }
+                    } else {
+                        if population[0].violations < cur_violations {
+                            cur_violations = population[0].violations;
+                            n_cur_violations = 1;
+                        } else if population[0].violations == cur_violations {
+                            n_cur_violations += 1;
                         }
                     }
+                    progress
+                        .seed_pool_size
+                        .store(seed_pool.len(), Ordering::Relaxed);
+                    progress
+                        .diversity_violations
+                        .store(seed_pool[0].violations, Ordering::Relaxed);
                 }
-                if i > (SAMPLING_LENGTH + 1) * stagnation_iteration {
-                    break;
-                }
+                State::Running => {
+                    if ts > best_score {
+                        best_score = ts;
+                        winners[0] = population[0].clone();
+                    }
 
-                progress.progress.store(
-                    usize::max(
-                        (i - stagnation_iteration) * 100 / (SAMPLING_LENGTH * stagnation_iteration),
-                        winners.len() * 100 / population.len(),
-                    ),
-                    Ordering::Relaxed,
-                );
+                    ema99 = ema99 * EMA_FAST_CONST + ts * (1.0 - EMA_FAST_CONST);
+                    ema999 = ema999 * EMA_SLOW_CONST + ts * (1.0 - EMA_SLOW_CONST);
+
+                    if cur_violations == population[0].violations {
+                        n_cur_violations += 1;
+                    } else {
+                        cur_violations = population[0].violations;
+                        n_cur_violations = 1;
+                    }
+                    if ema99 < ema999 && n_cur_violations > VIOLATIONS_STAGNATION_THRESHOLD {
+                        state = State::Stagnated;
+                        stagnation_iteration = i;
+                        winners.push(population[0].clone());
+                    }
+                }
+                State::Stagnated => {
+                    if ts > best_score {
+                        if !winners
+                            .iter()
+                            .any(|c| c.chromosone == population[0].chromosone)
+                        {
+                            winners.push(population[0].clone());
+                            if winners.len() >= population.len() {
+                                break;
+                            }
+                        }
+                    }
+                    if i > (SAMPLING_LENGTH + 1) * stagnation_iteration {
+                        break;
+                    }
+
+                    progress.progress.store(
+                        usize::max(
+                            (i - stagnation_iteration) * 100
+                                / (SAMPLING_LENGTH * stagnation_iteration),
+                            winners.len() * 100 / population.len(),
+                        ),
+                        Ordering::Relaxed,
+                    );
+                }
             }
 
             if progress.sigint.load(Ordering::Relaxed) {
@@ -186,7 +251,9 @@ impl Gas {
         }
 
         // tournament phase
-        let (winner, _) = self.final_tournament.run(&winners, rng, &score_weights);
+        let (winner, _) = self
+            .final_tournament
+            .run(&winners, &mut rng, &score_weights);
         *progress.top.write().unwrap() = winner.clone();
 
         winner

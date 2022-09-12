@@ -13,16 +13,20 @@ use crate::rando::Rando;
 *  Set sigint to true to stop the iterations manually.
 *
 **/
-pub struct Pool {
-    pub progresses: Vec<CycleProgress>,
-    pub handles: Vec<thread::JoinHandle<Candidate>>,
+pub struct Pool<const N: usize, const NSYMS: usize> {
+    pub progresses: Vec<CycleProgress<N, NSYMS>>,
+    pub handles: Vec<thread::JoinHandle<Candidate<N, NSYMS>>>,
     pub sigint: Arc<AtomicBool>,
 }
 
-impl Pool {
-    pub fn new(gas: Arc<Gas>, nthreads: usize, sigint: Arc<AtomicBool>) -> Pool {
-        let mut progresses = Vec::<CycleProgress>::with_capacity(nthreads);
-        let mut handles = Vec::<thread::JoinHandle<Candidate>>::with_capacity(nthreads);
+impl<const N: usize, const NSYMS: usize> Pool<N, NSYMS> {
+    pub fn new(
+        gas: Arc<Gas<N, NSYMS>>,
+        nthreads: usize,
+        sigint: Arc<AtomicBool>,
+    ) -> Pool<N, NSYMS> {
+        let mut progresses = Vec::<CycleProgress<N, NSYMS>>::with_capacity(nthreads);
+        let mut handles = Vec::<thread::JoinHandle<Candidate<N, NSYMS>>>::with_capacity(nthreads);
 
         for _ in 0..nthreads {
             let igas = gas.clone();
@@ -42,9 +46,10 @@ impl Pool {
         self.handles.iter().all(|h| h.is_finished())
     }
 
-    pub fn winner(&mut self, gas: Arc<Gas>) -> Candidate {
+    pub fn winner(&mut self, gas: Arc<Gas<N, NSYMS>>) -> Candidate<N, NSYMS> {
         let mut rng = Rando::new();
-        let winners: Vec<Candidate> = self.handles.drain(..).map(|h| h.join().unwrap()).collect();
+        let winners: Vec<Candidate<N, NSYMS>> =
+            self.handles.drain(..).map(|h| h.join().unwrap()).collect();
         let (winner, _) = gas
             .final_tournament
             .run(&winners, &mut rng, &gas.fitness.weights());

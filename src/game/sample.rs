@@ -8,7 +8,7 @@ use crate::game::*;
 use crate::rando::Rando;
 
 #[derive(Debug, Clone)]
-pub struct Sample {
+pub struct Sample<const N: usize, const NSYMS: usize> {
     pub tries_per_game: std::ops::Range<usize>,
 }
 
@@ -18,17 +18,17 @@ pub struct Sample {
 /// point. Whoever has the most points wins. In the case of a tie, up to 10 tie
 /// breakers are attempted. If it is still tied after 10 tie-breakers, the point
 /// goes to left.
-impl Sample {
-    pub const fn new(tries_per_game: std::ops::Range<usize>) -> Sample {
+impl<const N: usize, const NSYMS: usize> Sample<N, NSYMS> {
+    pub const fn new(tries_per_game: std::ops::Range<usize>) -> Self {
         Sample { tries_per_game }
     }
 }
 
-impl Game for Sample {
+impl<const N: usize, const NSYMS: usize> Game<N, NSYMS> for Sample<N, NSYMS> {
     fn run(
         &self,
-        left: &Candidate,
-        right: &Candidate,
+        left: &Candidate<N, NSYMS>,
+        right: &Candidate<N, NSYMS>,
         rng: &mut Rando,
         score_weights: &Vec<f64>,
     ) -> LeftRight {
@@ -79,7 +79,7 @@ mod tests {
             .with(predicate::eq(0..9))
             .times(1)
             .return_const(2usize);
-        let g = Sample::new(TRIES_PER_GAME);
+        let g = Sample::<5, 3>::new(TRIES_PER_GAME);
         assert_eq!(
             LeftRight::Left,
             g.run(
@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn test_game_violations() {
         let mut r = Rando::default();
-        let g = Sample::new(TRIES_PER_GAME);
+        let g = Sample::<5, 3>::new(TRIES_PER_GAME);
         assert_eq!(
             LeftRight::Right,
             g.run(
@@ -133,7 +133,7 @@ mod tests {
             .with(predicate::eq(0..9))
             .times(11)
             .return_const(2usize);
-        let g = Sample::new(TRIES_PER_GAME);
+        let g = Sample::<5, 3>::new(TRIES_PER_GAME);
         assert_eq!(
             LeftRight::Left,
             g.run(

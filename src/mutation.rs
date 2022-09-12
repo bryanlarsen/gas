@@ -2,24 +2,24 @@ pub mod mutate;
 pub mod null;
 pub mod rotate;
 
-use crate::chromosone::Chromosone;
+use crate::chromosone::Gene;
 
 #[mockall_double::double]
 use crate::rando::Rando;
 
-pub trait Mutation {
-    fn run(&self, candidate: &Chromosone, rng: &mut Rando) -> Chromosone;
+pub trait Mutation<const N: usize, const NSYMS: usize> {
+    fn run(&self, candidate: &[Gene; N], rng: &mut Rando) -> [Gene; N];
 }
 
-pub struct MutationIter<'a> {
+pub struct MutationIter<'a, const N: usize, const NSYMS: usize> {
     i: usize,
-    config: &'a MutationConfig,
+    config: &'a MutationConfig<N, NSYMS>,
 }
 
-impl<'a> Iterator for MutationIter<'a> {
-    type Item = &'a Box<dyn Mutation + Sync + Send>;
+impl<'a, const N: usize, const NSYMS: usize> Iterator for MutationIter<'a, N, NSYMS> {
+    type Item = &'a Box<dyn Mutation<N, NSYMS> + Sync + Send>;
 
-    fn next(&mut self) -> Option<&'a Box<dyn Mutation + Sync + Send>> {
+    fn next(&mut self) -> Option<&'a Box<dyn Mutation<N, NSYMS> + Sync + Send>> {
         self.i += 1;
         if self.i >= self.config.indices.len() {
             self.i = 0;
@@ -28,15 +28,15 @@ impl<'a> Iterator for MutationIter<'a> {
     }
 }
 
-pub struct MutationConfig {
-    mutations_with_weights: Vec<(usize, Box<dyn Mutation + Sync + Send>)>,
+pub struct MutationConfig<const N: usize, const NSYMS: usize> {
+    mutations_with_weights: Vec<(usize, Box<dyn Mutation<N, NSYMS> + Sync + Send>)>,
     indices: Vec<usize>,
 }
 
-impl MutationConfig {
+impl<const N: usize, const NSYMS: usize> MutationConfig<N, NSYMS> {
     pub fn new(
-        mutations_with_weights: Vec<(usize, Box<dyn Mutation + Sync + Send>)>,
-    ) -> MutationConfig {
+        mutations_with_weights: Vec<(usize, Box<dyn Mutation<N, NSYMS> + Sync + Send>)>,
+    ) -> MutationConfig<N, NSYMS> {
         let weights = mutations_with_weights
             .iter()
             .map(|c| c.0)
@@ -48,7 +48,7 @@ impl MutationConfig {
         }
     }
 
-    pub fn iter(&self) -> MutationIter {
+    pub fn iter(&self) -> MutationIter<N, NSYMS> {
         MutationIter {
             i: self.indices.len(),
             config: self,

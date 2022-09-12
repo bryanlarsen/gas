@@ -1,47 +1,40 @@
 use std::collections::VecDeque;
 
+use super::elo::elo;
+use super::Tournament;
 use crate::candidate::Candidate;
 use crate::game::{self, Game};
-use crate::tournaments::Tournament;
 
 #[mockall_double::double]
 use crate::rando::Rando;
 
-pub struct SingleElimination<G: Game> {
+pub struct SingleElimination<G: Game<N, NSYMS>, const N: usize, const NSYMS: usize> {
     pub game: G,
 }
 
-impl<G: Game> SingleElimination<G> {
-    pub const fn new(game: G) -> SingleElimination<G> {
+impl<G: Game<N, NSYMS>, const N: usize, const NSYMS: usize> SingleElimination<G, N, NSYMS> {
+    pub const fn new(game: G) -> SingleElimination<G, N, NSYMS> {
         SingleElimination { game }
     }
-}
 
-impl<G: Game> Tournament for SingleElimination<G> {
-    fn run(
+    /// the guts of the single elimination tournament, pulled out so it can be called for each side of a double elimination tournament.
+    ///
+    /// `remaining`: indices into `population` of the candidates that have not yet lost out of the tournament.  By taking 2 candidates from the top and inserting the winner into the bottom, the bye's for tournament sizes not a power of 2 are handled properly.
+    /// `rating`: the ELO rating of candidates.   Indices in this vector match that of `population`
+    /// `k`: the K factor for ELO rating.   This is reduced by 10% every round of the tournament.
+    pub fn do_side(
         &self,
-        population: &Vec<Candidate>,
+        population: &Vec<Candidate<N, NSYMS>>,
+        remaining: &mut VecDeque<usize>,
+        rating: &mut Vec<usize>,
+        k: f64,
         rng: &mut Rando,
         score_weights: &Vec<f64>,
-    ) -> (Candidate, Vec<usize>) {
-        let mut remaining: VecDeque<usize> = VecDeque::with_capacity(population.len());
-        let mut wins = vec![0usize; population.len()];
-
-        for i in 0..population.len() {
-            remaining.push_back(i);
-        }
-        rng.shuffle(remaining.make_contiguous());
-
+    ) -> () {
+        let mut k = k;
         while remaining.len() >= 2 {
             let left = remaining.pop_front().unwrap();
             let right = remaining.pop_front().unwrap();
-
-            // normally in the any given tournament round each player has the
-            // same number of wins. However, if any player gets a bye because
-            // the number of players isn't a power of 2 it won't be. To ensure
-            // that the tournament is guaranteed to have the most number of wins
-            // we have to give anybody who gets a "bye" a win for the bye.
-            wins[left] = wins[right];
 
             match self
                 .game
@@ -49,17 +42,50 @@ impl<G: Game> Tournament for SingleElimination<G> {
             {
                 game::LeftRight::Left => {
                     remaining.push_back(left);
-                    wins[left] += 1;
+                    (rating[left], rating[right]) = elo(k, rating[left], rating[right]);
                 }
                 game::LeftRight::Right => {
                     remaining.push_back(right);
-                    wins[right] += 1;
+                    (rating[right], rating[left]) = elo(k, rating[right], rating[left]);
                 }
+            }
+
+            // the next round starts when there are a power of two candidates remaining.
+            if remaining.len().count_ones() == 1 {
+                k *= 0.9;
             }
         }
         assert!(remaining.len() == 1);
+    }
+}
 
-        (population[remaining.pop_front().unwrap()].clone(), wins)
+impl<G: Game<N, NSYMS>, const N: usize, const NSYMS: usize> Tournament<N, NSYMS>
+    for SingleElimination<G, N, NSYMS>
+{
+    fn run(
+        &self,
+        population: &Vec<Candidate<N, NSYMS>>,
+        rng: &mut Rando,
+        score_weights: &Vec<f64>,
+    ) -> (Candidate<N, NSYMS>, Vec<usize>) {
+        let mut remaining: VecDeque<usize> = VecDeque::with_capacity(population.len());
+        let mut rating = vec![1000usize; population.len()];
+
+        for i in 0..population.len() {
+            remaining.push_back(i);
+        }
+        rng.shuffle(remaining.make_contiguous());
+
+        self.do_side(
+            population,
+            &mut remaining,
+            &mut rating,
+            200.0,
+            rng,
+            score_weights,
+        );
+
+        (population[remaining.pop_front().unwrap()].clone(), rating)
     }
 }
 
@@ -80,7 +106,7 @@ mod tests {
         let g = game::full::Full::new();
         let t = SingleElimination::new(g);
         let (winner, weights) = t.run(&pop, &mut r, &vec![1.0; 9]);
-        assert_eq!(weights, [1, 0]);
+        assert_eq!(weights, [1100, 900]);
         Candidate::assert_eq(&winner, &pop[0]);
     }
 
@@ -97,7 +123,7 @@ mod tests {
         let g = game::full::Full::new();
         let t = SingleElimination::new(g);
         let (winner, weights) = t.run(&pop, &mut r, &vec![1.0; 9]);
-        assert_eq!(weights, [1, 0, 2]);
+        assert_eq!(weights, [985, 900, 1115]);
         Candidate::assert_eq(&winner, &pop[2]);
     }
 }

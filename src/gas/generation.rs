@@ -8,6 +8,8 @@ use crate::rando::Rando;
 use crate::crossover::Crossover;
 #[cfg(doc)]
 use crate::mutation::Mutation;
+#[cfg(doc)]
+use crate::tournaments::Tournament;
 
 /// Given one generation of candidates, create the next generation.   The heart of the GA.
 ///
@@ -23,17 +25,17 @@ use crate::mutation::Mutation;
 /// outside, but are taken as parameters so they don't have to be recalculated
 /// every generation:
 ///
-/// * [`rng`]: pass [`Rando::new()`]
-/// * [`score_weights`]: pass [`Gas.fitness.weights()`]
+/// * `rng`: pass [`Rando::new()`]
+/// * `score_weights`: pass [`Gas.fitness.weights()`]
 
-impl Gas {
+impl<const N: usize, const NSYMS: usize> Gas<N, NSYMS> {
     pub fn generation(
         &self,
-        population: &Vec<Candidate>,
+        population: &Vec<Candidate<N, NSYMS>>,
         rng: &mut Rando,
         score_weights: &Vec<f64>,
-    ) -> Vec<Candidate> {
-        let mut nextgen = Vec::<Candidate>::with_capacity(population.len());
+    ) -> Vec<Candidate<N, NSYMS>> {
+        let mut nextgen = Vec::<Candidate<N, NSYMS>>::with_capacity(population.len());
 
         // tournament phase
         let (winner, weights) = self.cycle_tournament.run(&population, rng, score_weights);
@@ -82,24 +84,23 @@ impl Gas {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chromosone;
 
     use mockall::predicate;
 
     #[test]
     fn test_generation() {
-        let gas = Gas::dut();
+        let gas = Gas::<5, 3>::dut();
         let mut r = Rando::default();
         r.expect_shuffle().times(1).return_const(()); // used by single_elimination_tournament
         r.expect_weighted_iter() // used by generation to select parents
             .times(1)
             .return_const([0, 1].iter().cloned());
         r.expect_gen_range() // used by mutate
-            .with(predicate::eq(0..chromosone::LENGTH))
+            .with(predicate::eq(0..5))
             .times(1)
             .return_const(1usize);
         r.expect_gen_range() // used by mutate
-            .with(predicate::eq(0..chromosone::NSYMS))
+            .with(predicate::eq(0..3))
             .times(1)
             .return_const(1usize);
 

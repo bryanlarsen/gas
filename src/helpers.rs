@@ -1,8 +1,14 @@
+#[cfg(doc)]
+use crate::crossover::CrossoverIter;
+#[cfg(doc)]
+use crate::mutation::MutationIter;
+
 /**
 A multidimensional version of Bresenham's algorithm.  It's used to convert weights into indexes, used by [MutationIter] and [CrossoverIter]
 
 It'd be really nice if this function was const, and it theoretically could be, but Vec currently can't be used in const functions and it'd be hard to refactor to not use Vec.
-*/
+ */
+
 pub fn multidimensional_bresenhams(weights: &[usize]) -> Vec<usize> {
     let mut result: Vec<usize> = vec![];
     if weights.len() == 0 {

@@ -1,5 +1,5 @@
 use super::Mutation;
-use crate::chromosone::Chromosone;
+use crate::chromosone::Gene;
 
 #[cfg(test)]
 use mockall::*;
@@ -9,18 +9,18 @@ use crate::rando::Rando;
 /**
 *   If `n` is 1 then this mutator swaps the genes at 2 locuses.   If `n` is 2 or more, then this mutator chooses n+1 locuses, and rotates the genes through those positions.
 **/
-pub struct Rotate {
+pub struct Rotate<const N: usize, const NSYMS: usize> {
     pub n: usize,
 }
 
-impl Rotate {
-    pub const fn new(n: usize) -> Rotate {
+impl<const N: usize, const NSYMS: usize> Rotate<N, NSYMS> {
+    pub const fn new(n: usize) -> Rotate<N, NSYMS> {
         Rotate { n }
     }
 }
 
-impl Mutation for Rotate {
-    fn run(&self, chromosone: &Chromosone, rng: &mut Rando) -> Chromosone {
+impl<const N: usize, const NSYMS: usize> Mutation<N, NSYMS> for Rotate<N, NSYMS> {
+    fn run(&self, chromosone: &[Gene; N], rng: &mut Rando) -> [Gene; N] {
         let mut mutated = chromosone.clone();
         let mut curpos = rng.gen_range(0..chromosone.len());
         let origval = chromosone[curpos];
@@ -38,18 +38,17 @@ impl Mutation for Rotate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chromosone;
 
     #[test]
     fn test_rotate1() {
         let mut r = Rando::default();
-        let m = Rotate::new(1);
+        let m = Rotate::<5, 3>::new(1);
         r.expect_gen_range()
-            .with(predicate::eq(0..chromosone::LENGTH))
+            .with(predicate::eq(0..5))
             .times(1)
             .return_const(1usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..chromosone::LENGTH))
+            .with(predicate::eq(0..5))
             .times(1)
             .return_const(3usize);
         assert_eq!(m.run(&[0, 1, 2, 0, 1], &mut r), [0, 0, 2, 1, 1]);
@@ -58,17 +57,17 @@ mod tests {
     #[test]
     fn test_rotate2() {
         let mut r = Rando::default();
-        let m = Rotate::new(2);
+        let m = Rotate::<5, 3>::new(2);
         r.expect_gen_range()
-            .with(predicate::eq(0..chromosone::LENGTH))
+            .with(predicate::eq(0..5))
             .times(1)
             .return_const(0usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..chromosone::LENGTH))
+            .with(predicate::eq(0..5))
             .times(1)
             .return_const(1usize);
         r.expect_gen_range()
-            .with(predicate::eq(0..chromosone::LENGTH))
+            .with(predicate::eq(0..5))
             .times(1)
             .return_const(2usize);
         assert_eq!(m.run(&[0, 1, 2, 0, 1], &mut r), [1, 2, 0, 0, 1]);

@@ -1,20 +1,20 @@
-use crate::chromosone::Chromosone;
+use crate::chromosone::Gene;
 use crate::crossover::Crossover;
 
 #[mockall_double::double]
 use crate::rando::Rando;
 
 /** If each chromosone is a deck of cards, splice would cut each deck twice in the same place, and then use the middle from one deck and the top & bottom from the other. **/
-pub struct Splice {}
+pub struct Splice<const N: usize, const NSYMS: usize> {}
 
-impl Splice {
+impl<const N: usize, const NSYMS: usize> Splice<N, NSYMS> {
     pub const fn new() -> Self {
         Self {}
     }
 }
 
-impl Crossover for Splice {
-    fn run(&self, left: &Chromosone, right: &Chromosone, rng: &mut Rando) -> Chromosone {
+impl<const N: usize, const NSYMS: usize> Crossover<N, NSYMS> for Splice<N, NSYMS> {
+    fn run(&self, left: &[Gene; N], right: &[Gene; N], rng: &mut Rando) -> [Gene; N] {
         let mut child = left.clone();
         let mut start;
         let mut end;
@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_splice() {
         let mut r = Rando::default();
-        let m = Splice::new();
+        let m = Splice::<5, 3>::new();
         r.expect_gen_range()
             .with(predicate::eq(0..5))
             .times(1)

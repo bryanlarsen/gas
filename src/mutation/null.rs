@@ -1,5 +1,5 @@
 use super::Mutation;
-use crate::chromosone::Chromosone;
+use crate::chromosone::Gene;
 
 #[mockall_double::double]
 use crate::rando::Rando;
@@ -7,16 +7,16 @@ use crate::rando::Rando;
 /**
 *  This mutator randomly changes `n` locuses in the chromosone.
 **/
-pub struct Null {}
+pub struct Null<const N: usize, const NSYMS: usize> {}
 
-impl Null {
-    pub const fn new() -> Null {
+impl<const N: usize, const NSYMS: usize> Null<N, NSYMS> {
+    pub const fn new() -> Null<N, NSYMS> {
         Null {}
     }
 }
 
-impl Mutation for Null {
-    fn run(&self, chromosone: &Chromosone, _rng: &mut Rando) -> Chromosone {
+impl<const N: usize, const NSYMS: usize> Mutation<N, NSYMS> for Null<N, NSYMS> {
+    fn run(&self, chromosone: &[Gene; N], _rng: &mut Rando) -> [Gene; N] {
         chromosone.clone()
     }
 }

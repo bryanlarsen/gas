@@ -1,7 +1,5 @@
 use super::Gas;
 use crate::candidate::Candidate;
-use crate::chromosone;
-
 #[mockall_double::double]
 use crate::rando::Rando;
 
@@ -11,8 +9,8 @@ use std::sync::{
 };
 
 #[cfg_attr(test, allow(dead_code))]
-/** Communication between a [cycle] running in a thread and the main thread.   This allows the GA algorithm to be monitored during execution.  */
-pub struct CycleProgress {
+/** Communication between a [Gas.cycle] running in a thread and the main thread.   This allows the GA algorithm to be monitored during execution.  */
+pub struct CycleProgress<const N: usize, const NSYMS: usize> {
     /// out: the number of iterations of the GA that have been run
     pub iteration: Arc<AtomicUsize>,
     /// out: continually updated with a rounded integer of [Candidate#total_score] of the best candidate
@@ -22,7 +20,7 @@ pub struct CycleProgress {
     /// out: continually updated with progress, values 0-100.   Does not increment until stagnation is detected.
     pub progress: Arc<AtomicUsize>,
     /// out: copy of the top candidate
-    pub top: Arc<RwLock<Candidate>>,
+    pub top: Arc<RwLock<Candidate<N, NSYMS>>>,
     /// in: SIGINT or similar.  if set, cycle will finish and exit ASAP
     pub sigint: Arc<AtomicBool>,
 
@@ -31,8 +29,8 @@ pub struct CycleProgress {
 }
 
 #[cfg_attr(test, allow(dead_code))]
-impl CycleProgress {
-    pub fn new(gas: &Gas, sigint: &Arc<AtomicBool>) -> CycleProgress {
+impl<const N: usize, const NSYMS: usize> CycleProgress<N, NSYMS> {
+    pub fn new(gas: &Gas<N, NSYMS>, sigint: &Arc<AtomicBool>) -> CycleProgress<N, NSYMS> {
         CycleProgress {
             iteration: Arc::new(AtomicUsize::new(0)),
             score: Arc::new(AtomicIsize::new(0)),
@@ -40,16 +38,13 @@ impl CycleProgress {
             progress: Arc::new(AtomicUsize::new(0)),
             seed_pool_size: Arc::new(AtomicUsize::new(0)),
             diversity_violations: Arc::new(AtomicUsize::new(0)),
-            top: Arc::new(RwLock::new(Candidate::from_chromosone(
-                gas,
-                [0; chromosone::LENGTH],
-            ))),
+            top: Arc::new(RwLock::new(Candidate::from_chromosone(gas, [0; N]))),
             sigint: Arc::clone(&sigint),
         }
     }
 
     /// Arc::clone all the Arc's.   So like Arc::clone, doesn't actually clone the contents of the CycleProgress, just the wrapper.
-    pub fn clone(&self) -> CycleProgress {
+    pub fn clone(&self) -> CycleProgress<N, NSYMS> {
         CycleProgress {
             iteration: Arc::clone(&self.iteration),
             score: Arc::clone(&self.score),
@@ -76,20 +71,20 @@ impl CycleProgress {
 }
 
 /**
- ** Given a population, run multiple [generation::generation]'s of the algorithm until it stagnates and then return the winner.
+ ** Given a population, run multiple [Gas.generation]'s of the algorithm until it stagnates and then return the winner.
  **
  ** This function is designed to be run in a thread, it keeps the [CycleProgress]
  ** structure updated which allows the function to be monitored on the fly.
  **
  ** There are four phases to the algorithm.
  **
- ** 1. Seeding: Starting with a set of random candidates, iterate [`generation`] until the top
+ ** 1. Seeding: Starting with a set of random candidates, iterate [Gas.generation] until the top
  ** candidate either has zero constraint violations or the number of constraint
  ** violations has stabilized. Add the candidate to the seed and then restart
  ** with another set of random candidates. Repeat until you've accumulated
  ** population_size number of seeds.
  **
- **  2. Running: Iterate [`generation`] until both the score and number of violations has stagnated.
+ **  2. Running: Iterate [Gas.generation] until both the score and number of violations has stagnated.
  **
  ** 3. Stagnated: Keep running the GA, doing a biased sampling of the winners
  ** until we've got enough samples or we've been doing this step for too long.
@@ -97,13 +92,13 @@ impl CycleProgress {
  ** 4. Do a final tournament of the winners do get the grand winner, which we return.
  **
  **/
-impl Gas {
+impl<const N: usize, const NSYMS: usize> Gas<N, NSYMS> {
     #[cfg_attr(test, allow(dead_code))]
-    pub fn cycle(&self, progress: &mut CycleProgress) -> Candidate {
+    pub fn cycle(&self, progress: &mut CycleProgress<N, NSYMS>) -> Candidate<N, NSYMS> {
         let score_weights = self.fitness.weights();
-        let mut population = Vec::<Candidate>::with_capacity(self.population_size);
+        let mut population = Vec::<Candidate<N, NSYMS>>::with_capacity(self.population_size);
         let mut rng = Rando::new();
-        let mut seed_pool = Vec::<Candidate>::new();
+        let mut seed_pool = Vec::<Candidate<N, NSYMS>>::new();
 
         for _ in 0..self.population_size {
             population.push(Candidate::new(self, &mut rng));
@@ -120,7 +115,7 @@ impl Gas {
         // best score ever seen
         let mut best_score = 0f64;
         // a sampling of generation winners for the final tournament
-        let mut winners = Vec::<Candidate>::with_capacity(population.len());
+        let mut winners = Vec::<Candidate<N, NSYMS>>::with_capacity(population.len());
         // when state flipped
         let mut stagnation_iteration = 1usize;
 

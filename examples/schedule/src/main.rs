@@ -1,11 +1,14 @@
 mod schedule_data;
 
+use schedule_data::{LENGTH, NSYMS};
+
+use serde_json::json;
+use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
 use std::time::Instant;
 
-use gas::chromosone;
 use gas::constraints::{self, ConstraintConfig};
 use gas::crossover::{self, CrossoverConfig};
 use gas::fitness::{self, FitnessConfig};
@@ -20,10 +23,10 @@ const NTHREADS: usize = 4;
 fn main() {
     let gas = Arc::new(Gas {
         fitness: FitnessConfig::new(vec![
-            Box::new(fitness::distance::Distance::new(
+            Box::new(fitness::distance::Distance::<LENGTH, NSYMS>::new(
                 7,
                 schedule_data::DISTANCE_BEFORE,
-                [usize::MAX; chromosone::NSYMS],
+                [None; NSYMS],
                 1.0,
                 1.0,
             )),
@@ -50,11 +53,8 @@ fn main() {
                     .collect(),
             ),
         )]),
-        cycle_tournament: Box::new(tournaments::scale::Scale::new(
-            tournaments::single_elimination::SingleElimination::new(game::full::Full::new()),
-            1,
-            1.0,
-            2.0,
+        cycle_tournament: Box::new(tournaments::double_elimination::DoubleElimination::new(
+            game::full::Full::new(),
         )),
         final_tournament: Box::new(tournaments::full_season::FullSeason::new(
             game::full::Full::new(),
@@ -93,25 +93,39 @@ fn main() {
     }
 
     let winner = pool.winner(gas.clone());
-
-    println!("{{\"elapsed_ms\": {},", start.elapsed().as_millis());
-    println!("  \"chromosone\":{:?},", winner.chromosone);
-    print!("  \"results\":{{");
-    for i in 0..chromosone::LENGTH - 1 {
-        print!(
-            "\"{}\": \"{}\", ",
-            schedule_data::LOCUS_NAMES[i],
-            schedule_data::SYMBOL_NAMES[winner.chromosone[i] as usize]
-        );
-    }
+    let results: HashMap<&str, &str> = winner
+        .chromosone
+        .iter()
+        .enumerate()
+        .map(|(i, g)| {
+            (
+                schedule_data::LOCUS_NAMES[i],
+                schedule_data::SYMBOL_NAMES[*g as usize],
+            )
+        })
+        .collect();
+    let scores: HashMap<String, f64> = gas
+        .fitness
+        .names()
+        .iter()
+        .enumerate()
+        .map(|(i, name)| {
+            (
+                name.to_string(&schedule_data::SYMBOL_NAMES, &schedule_data::LOCUS_NAMES),
+                winner.scores[i],
+            )
+        })
+        .collect();
     println!(
-        "\"{}\": \"{}\" }},",
-        schedule_data::LOCUS_NAMES[chromosone::LENGTH - 1],
-        schedule_data::SYMBOL_NAMES[winner.chromosone[chromosone::LENGTH - 1] as usize]
+        "{}",
+        serde_json::to_string/*_pretty*/(&json!(HashMap::from([
+            ("elapsed_ms", json!(start.elapsed().as_millis() as f64)),
+            ("chromosone", json!(winner.chromosone.to_vec())),
+            ("results", json!(results)),
+            ("scores", json!(scores)),
+            ("violations", json!(winner.violations)),
+            ("total_score", json!(winner.total_score(&gas.fitness.weights())))
+        ])))
+        .unwrap()
     );
-    println!(
-        "  \"violations\":{}, \"score\":{}}}",
-        winner.violations,
-        winner.total_score(&gas.fitness.weights()),
-    )
 }

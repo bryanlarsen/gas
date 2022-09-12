@@ -1,5 +1,5 @@
 use super::Constraint;
-use crate::chromosone::Chromosone;
+use crate::chromosone::Gene;
 
 /**
 
@@ -7,18 +7,18 @@ This constraint allows the specification of which positions in the chromosone ar
 
  */
 
-pub struct InvalidPosition {
-    pub invalid_positions: Vec<Vec<bool>>, // chromosone::LENGTH; chromosone::NSYMS
+pub struct InvalidPosition<const N: usize, const NSYMS: usize> {
+    pub invalid_positions: Vec<Vec<bool>>, // FIXME [[bool; N]; NSYMS]
 }
 
-impl InvalidPosition {
-    pub const fn new(invalid_positions: Vec<Vec<bool>>) -> InvalidPosition {
+impl<const N: usize, const NSYMS: usize> InvalidPosition<N, NSYMS> {
+    pub const fn new(invalid_positions: Vec<Vec<bool>>) -> InvalidPosition<N, NSYMS> {
         InvalidPosition { invalid_positions }
     }
 }
 
-impl Constraint for InvalidPosition {
-    fn run(&self, chromosone: &Chromosone) -> usize {
+impl<const N: usize, const NSYMS: usize> Constraint<N, NSYMS> for InvalidPosition<N, NSYMS> {
+    fn run(&self, chromosone: &[Gene; N]) -> usize {
         let mut violations: usize = 0;
         for (i, g) in chromosone.iter().enumerate() {
             if self.invalid_positions[*g as usize][i] {
@@ -35,7 +35,7 @@ mod tests {
 
     #[test]
     fn test_invalid_position() {
-        let c = InvalidPosition::new(vec![
+        let c = InvalidPosition::<5, 3>::new(vec![
             vec![false, false, false, false, false],
             vec![false, true, false, true, false],
             vec![true, true, true, true, true],

@@ -1,30 +1,31 @@
-use crate::chromosone::{self, Chromosone};
+use crate::chromosone::Gene;
 use crate::gas::Gas;
+use array_init::array_init;
 
 #[cfg_attr(test, mockall_double::double)]
 use crate::rando::Rando;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Candidate {
-    pub chromosone: Chromosone,
+pub struct Candidate<const N: usize, const NSYMS: usize> {
+    pub chromosone: [Gene; N],
     pub scores: Vec<f64>,
     pub violations: usize,
 }
 
-impl Candidate {
-    pub fn from_chromosone(gas: &Gas, chromosone: Chromosone) -> Candidate {
+impl<const N: usize, const NSYMS: usize> Candidate<N, NSYMS> {
+    pub fn from_chromosone(gas: &Gas<N, NSYMS>, chromosone: [Gene; N]) -> Candidate<N, NSYMS> {
+        let scores = gas.fitness.scores(&chromosone);
+        let violations = gas.constraints.violations(&chromosone);
         Candidate {
             chromosone,
-            scores: gas.fitness.scores(&chromosone),
-            violations: gas.constraints.violations(&chromosone),
+            scores,
+            violations,
         }
     }
 
-    pub fn new(gas: &Gas, rng: &mut Rando) -> Candidate {
-        Candidate::from_chromosone(
-            gas,
-            array_init::array_init(|_| rng.gen_range(0..chromosone::NSYMS) as chromosone::Gene),
-        )
+    pub fn new(gas: &Gas<N, NSYMS>, rng: &mut Rando) -> Candidate<N, NSYMS> {
+        let mut rand_iter = rng.uniform_iter(0..NSYMS);
+        Candidate::from_chromosone(gas, array_init(|_| rand_iter.next().unwrap() as Gene))
     }
 
     #[cfg_attr(test, allow(dead_code))]
@@ -39,7 +40,7 @@ impl Candidate {
     }
 
     /// Hamming distance
-    pub fn distance(&self, other: &Candidate) -> usize {
+    pub fn distance(&self, other: &Candidate<N, NSYMS>) -> usize {
         let mut count = 0usize;
         for i in 0..self.chromosone.len() {
             if self.chromosone[i] != other.chromosone[i] {
@@ -51,7 +52,7 @@ impl Candidate {
 
     #[allow(dead_code)]
     /// give an estimate of a population's diversity where 1 == all the same and 0 == completely different.   Calculation is similar to a Hamming distance.
-    pub fn similarity(population: &[Candidate]) -> f64 {
+    pub fn similarity(population: &[Candidate<N, NSYMS>]) -> f64 {
         let mut similarities = Vec::<f64>::with_capacity(population[0].chromosone.len());
         for i in 0..population[0].chromosone.len() {
             let mut map = std::collections::HashMap::<usize, usize>::new();
@@ -78,7 +79,7 @@ impl Candidate {
 
     #[cfg(test)]
     /// cannot use assert_eq! on scores because they sometimes contain NaN.  NaN != NaN, which is true mathematically, but sucks in unit tests
-    pub fn assert_eq(left: &Candidate, right: &Candidate) {
+    pub fn assert_eq(left: &Candidate<N, NSYMS>, right: &Candidate<N, NSYMS>) {
         assert_eq!(
             left.chromosone, right.chromosone,
             "left {:?} right {:?}",
@@ -156,15 +157,15 @@ mod tests {
     fn test_new() {
         let gas = Gas::dut();
         let mut r = Rando::default();
-        r.expect_gen_range()
-            .with(predicate::eq(0..chromosone::NSYMS))
-            .times(chromosone::LENGTH)
-            .return_const(2usize);
+        r.expect_uniform_iter()
+            .with(predicate::eq(0..3))
+            .times(1)
+            .returning(|_| [1, 0, 1, 0, 1].iter().cloned());
         Candidate::assert_eq(
             &Candidate::new(&gas, &mut r),
             &Candidate {
-                chromosone: [2, 2, 2, 2, 2],
-                scores: gas.fitness.scores(&[2, 2, 2, 2, 2]),
+                chromosone: [1, 0, 1, 0, 1],
+                scores: gas.fitness.scores(&[1, 0, 1, 0, 1]),
                 violations: 0,
             },
         );

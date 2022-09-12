@@ -5,23 +5,23 @@ use crate::game::{Game, LeftRight};
 use crate::rando::Rando;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Full {}
+pub struct Full<const N: usize, const NSYMS: usize> {}
 
 /// A game that compares every score at the same position between candidate, all
 /// metrics with equal weighting. The candidate with the least violations wins.
 /// If that is equal, the candidate that is superior in the most scores wins. In
 /// the case of a tie, winner is random.
-impl Full {
-    pub const fn new() -> Full {
+impl<const N: usize, const NSYMS: usize> Full<N, NSYMS> {
+    pub const fn new() -> Full<N, NSYMS> {
         Full {}
     }
 }
 
-impl Game for Full {
+impl<const N: usize, const NSYMS: usize> Game<N, NSYMS> for Full<N, NSYMS> {
     fn run(
         &self,
-        left: &Candidate,
-        right: &Candidate,
+        left: &Candidate<N, NSYMS>,
+        right: &Candidate<N, NSYMS>,
         rng: &mut Rando,
         score_weights: &Vec<f64>,
     ) -> LeftRight {
@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_game() {
         let mut r = Rando::default();
-        let g = Full::new();
+        let g = Full::<5, 3>::new();
         assert_eq!(
             LeftRight::Left,
             g.run(
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_game_weights() {
         let mut r = Rando::default();
-        let g = Full::new();
+        let g = Full::<5, 3>::new();
         assert_eq!(
             LeftRight::Right,
             g.run(
@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn test_game_violations() {
         let mut r = Rando::default();
-        let g = Full::new();
+        let g = Full::<5, 3>::new();
         assert_eq!(
             LeftRight::Right,
             g.run(
@@ -143,7 +143,7 @@ mod tests {
             .with(predicate::eq(0..2))
             .times(1)
             .return_const(1usize);
-        let g = Full::new();
+        let g = Full::<5, 3>::new();
         assert_eq!(
             LeftRight::Right,
             g.run(

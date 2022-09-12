@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Mix","Mix is a crossover function that mixes the two crossovers on a locus-by-locus basis rather than a splice."]]};

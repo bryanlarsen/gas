@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["gas"] = [{"text":"impl&lt;const N:&nbsp;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.63.0/std/primitive.usize.html\">usize</a>, const NSYMS:&nbsp;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.63.0/std/primitive.usize.html\">usize</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.63.0/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"struct\" href=\"gas/game/full/struct.Full.html\" title=\"struct gas::game::full::Full\">Full</a>&lt;N, NSYMS&gt;","synthetic":false,"types":["gas::game::full::Full"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["multidimensional_bresenhams","A multidimensional version of Bresenham’s algorithm.  It’s used to convert weights into indexes, used by [MutationIter] and [CrossoverIter]"]]};

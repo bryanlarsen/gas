@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["cycle",""],["generation",""]],"struct":[["Gas","see module documentation"]]};

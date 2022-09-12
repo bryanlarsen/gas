@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Splice","If each chromosone is a deck of cards, splice would cut each deck twice in the same place, and then use the middle from one deck and the top & bottom from the other. *"]]};

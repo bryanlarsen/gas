@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["LocusDesirability","If each symbol has preferred locations in the chromosone, this may be expressed using the `LocusDesirability` fitness score.   The input to this FitnessFunction is the score each symbol gives to each locus in the chromosone.   The fitness function simply reports the chosen symbol’s score for each locus in the genome."]]};

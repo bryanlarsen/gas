@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../gas/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
+        </a><h2 class="location"></h2>
+    </nav>
+    <nav class="sidebar"><a class="sidebar-logo" href="../../gas/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
+        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../gas/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
+                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
+                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+</pre><pre class="rust"><code><span class="doccomment">/*!
+
+# Genetic Algorithm Scheduler
+
+This is a multi-dimensional genetic algorithm based optimizer written in rust with multi-threading.
+
+## Distinguishing Features
+
+- supports highly dimensional fitness scores with multiple mechanisms to order candidates
+
+- does not require a stable ordering between candidates
+
+- supports both constraint violations and fitness scores
+
+- takes advantage of const generics
+
+This optimizer was designed for a scheduling system, and will work best for problems that have similar characteristics.   You don&#39;t have to use it for shift scheduling, it should work well for anything that meets the following characteristics:
+
+- there are a large number of fitness functions rather than a single number or even a few numbers to be optimized.  In our case, how well the schedule fits each preference for each employee is treated as an fitness function.   Given that the employee can specify a suitability for each shift, this means that the number of fitness scores is larger than the length of the chromosone.
+
+- variables are discrete rather than continuous.   In our case, there are a small fixed number of employees that can be booked per shift.
+
+- the &quot;chromosone&quot; has a fixed length.
+
+- the position in the chromosone (aka the locus) is significant.    (In some other problem domains, the locus is less significant and the ordering of the genes is more significant).  This limitation can be overcome by writing significantly different [FitnessFunction]&#39;s.
+
+- fitness functions are relatively cheap to compute.  Parallelism is at the population rather than the game level.
+
+Some of these characteristics are more hard coded than others.   For example, you can adjust the [FitnessFunction]&#39;s, [Crossover] and [Mutation] functions to make genome subsequences more significant than locus position.
+
+## Terminology, Structure and Algorithm.
+
+Every potential solution is called a [Candidate].   Each [Candidate] has a chromosone which defines the solution.   The chromosone is an array of unsigned integers called genes.  Each gene occupies a position in the array called the locus.   For ease of computation, genes and locii are not enums, but adjacent unsized integers.   Mapping these integers to values is outside the scope of this library.   See the examples for details.
+
+At the time of creation each [Candidate] evaluates all of its [FitnessFunction]&#39;s to determine the [Candidate]&#39;s suitability.  Alongside the [FitnessFunction]&#39;s, [Constraint]&#39;s are also evaluated and number of [Constraint] violations stored.
+
+Because each [Candidate] has many [FitnessFunction] values, [Candidate]&#39;s cannot be trivially and stably ordered.  Instead, two candidates are compared in a [Game], and repeated [Game]&#39;s are run across a population in a [Tournament] to order the [Candidate]&#39;s by [FitnessFunction]&#39;s and [Constraint]&#39;s.
+
+All current [Game] implementations order by [Constraint] violations before [FitnessFunction] scores.   In other words, only if two candidates have the same number of constraint violations are the fitness scores considered.  Most [Game]&#39;s and [Tournament]&#39;s are not stable, and have a strong stochastic component.
+
+A set of [Candidate]&#39;s is called a population.
+
+Each cycle through the algorithm is called a [Gas::generation].  A generation creates a new population from an existing population.  Each generation consists of the following steps:
+
+1. Run a [Tournament] to order the candidates.
+2. Loop for each new child:
+    1.  Select two parents.  Parent selection is biased by [Tournament] score and prefers selecting dissimilar parents.
+    2.  Choose a [Crossover] algorithm to run on the two parents to create a child.
+    3.  Choose a [Mutation] algorithm to run on the child
+
+Typically the GA is tuned so that Null [Crossover] and [Mutation] algorithms are
+often chosen. The Null algorithms simply clone a parent rather than performing a
+crossover or mutation.
+
+Selection of the [Crossover] and [Mutation] algorithms are not done stochastically.  Weights are configured for each algorithm, and the algorithms are cycled respecting the weights.   Therefore if the sum of the weights in [Gas::crossovers] have common factors with the sum of the weights in [Gas::mutations], some combinations of crossover and mutation may never be chosen.   In some cases you may wish to deliberately trigger this effect, but in most cases you should probably ensure that the both sum of weights do not have a common factor.
+
+Looping the [Gas::generation] until stagnation is reached is called a [Gas::cycle].   There are three stages to each cycle: seeding, running and finalizing.   See the docs for [Gas::cycle] for more details
+
+Multiple [Gas::cycle]&#39;s are run in parallel in a [pool]. The pool may be terminated
+early by setting the [CycleProgress::sigint] flag. When a [Gas::cycle] stops TBD.
+
+# Setup and Configuration
+
+See the &quot;examples/&quot; directory for examples on how to use this library.
+
+## The Chromosone
+
+The chromosone is configured through const generics.   Virtually every object in the system takes two const generics as template parameters: `N` and `NSYMS`.   `N` is the length of the chromosone, and `NSYMS` is the number of genetic symbols there are.   The chromosone is defined as `[Gene; N]` where Gene is in the range `0..NSYMS`.  In chromosone.rs Gene is defined as a u8 since there are very few genetic algorithm problems where NSYMS is greater than 256.   Theoretically the `pub type Gene = u8` could be templated as well, if you need it done, feel free to ask or open a PR.
+
+## The `Gas` object
+
+The algorithm is configured by creating a [Gas] object.   This object specifies the fitness functions, constraints, mutation and crossover algorithms, et cetera.
+
+### Fitness Functions
+
+It&#39;s quite likely that the available fitness functions will not be suitable for your project.   A good set of fitness functions are critical to the success of your optimization.  It&#39;s easy to spend lots of effort on algorithm tuning, but without a solid base you&#39;re unlikely to get good results.
+
+[`FitnessFunction`]&#39;s return a Vec of floats for the scores, taking a chromosone as input.
+
+### Constraints
+
+[`Constraint`]&#39;s are much like fitness functions, except they return vectors of booleans, specifying whether the chromosone is valid or invalid.  Any candidates which have more constraint violations than others will lose any competitions.  A boolean doesn&#39;t provide much guidance to the optimizer, so providing a fitness function that will indicate if a chromosone is close to violating a constraint will be helpful.
+
+### Crossovers and Mutations
+
+The set of [`Crossover`] and [`Mutation`] operators provided in the example are probably a good starting point for your problem.   One important consideration is to provide a good number of Null operators for both.
+
+### Games and Tournaments
+
+A [`Game`] replaces the simple fitness score competition in most Genetic Algorithms, so it is an interesting area for experiment.  The one used in the example worked best for us.   A [`Tournament`] is used to rank candidates.
+
+### Taboo Distance
+
+This ensures genetic diversity
+
+### Stagnation parameters
+
+There are some constants in the [`Gas::cycle`] function that are used to determine when a cycle of the algorithm has stagnated.   They perhaps should be parameterized, but for now can
+
+### nthreads and the Pool
+
+Once you have a [`Gas`] configured, you can start it via [`Gas::cycle`], or instead you can set up [`Pool`] to run several populations in parallel.
+
+# References
+
+&lt;https://www.researchgate.net/profile/Marek-Gutowski/publication/216486175_Biology_Physics_Small_Worlds_and_Genetic_Algorithms/links/09e415003ec1521171000000/Biology-Physics-Small-Worlds-and-Genetic-Algorithms.pdf?origin=publication_detail&gt;
+
+&lt;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7259647/&gt;
+
+# Future
+
+## unwrap
+
+This library makes extensive use of unwrap.  This can be justified by the fact that the data given to it is programmatic and the configuration set at compile time, so theoretically pretty much any error is programmatic rather than usage.   But really it&#39;s just because unwrap style programming is easier.   I deliberately always used unwrap rather than an easier form to make cleaning them up easier.
+
+## further development
+
+This library was designed to be used in a multi-population network.  Some effort was made to implement a primitive network topology between the populations, but this did not improve the results and was abandoned.  This should be explored in more depth.   See &lt;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7259647/&gt; for a discussion of potential network topologies.
+
+
+ */</span>
+
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">candidate</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">chromosone</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">constraints</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">crossover</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">fitness</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">game</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">gas</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">helpers</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">mutation</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pool</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">rando</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">tournaments</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">candidate::Candidate</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">constraints::Constraint</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">crossover::Crossover</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">fitness::FitnessFunction</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">game::Game</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">gas::Gas</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">mutation::Mutation</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">pool::Pool</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">tournaments::Tournament</span>;
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="gas" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0 (4b91a6ea7 2022-08-08)" ></div>
+</body></html>

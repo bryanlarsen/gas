@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["double_elimination",""],["elo",""],["full_season",""],["single_elimination",""]],"trait":[["Tournament","A tournament ranks candidates. It returns a winner plus an elo ranking with average 1000 for each candidate in the population."]]};

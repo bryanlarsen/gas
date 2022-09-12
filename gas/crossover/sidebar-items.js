@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["mix",""],["null",""],["splice",""]],"struct":[["CrossoverConfig",""],["CrossoverIter",""]],"trait":[["Crossover","An operator that given two chromosones, produces a third.   Aka breeding."]]};

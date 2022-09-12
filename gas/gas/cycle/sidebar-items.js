@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["CycleProgress","Communication between a [Gas.cycle] running in a thread and the main thread.   This allows the GA algorithm to be monitored during execution.  "]]};

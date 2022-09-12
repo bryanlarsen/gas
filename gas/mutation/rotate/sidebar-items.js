@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Rotate","If `n` is 1 then this mutator swaps the genes at 2 locuses.   If `n` is 2 or more, then this mutator chooses n+1 locuses, and rotates the genes through those positions."]]};

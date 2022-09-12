@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["InvalidPosition","This constraint allows the specification of which positions in the chromosone are invalid for certain symbols."]]};

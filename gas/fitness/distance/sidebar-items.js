@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Distance","The Distance fitness scores discourage clumping of symbols in the chromosone and encourage identical symbols to spread out evenly."]]};

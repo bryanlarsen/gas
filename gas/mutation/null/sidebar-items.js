@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Null","This mutator randomly changes `n` locuses in the chromosone."]]};

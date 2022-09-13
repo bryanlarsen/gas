@@ -3,7 +3,7 @@ name = "ga-scheduler"
 version = "0.1.0"
 edition = "2021"
 description = "A Genetic Algorithm optimizer designed for scheduling and similar tasks"
-license = "Apache2"
+license = "Apache-2.0"
 repository = "https://github.com/bryanlarsen/gas"
 documentation = "https://bryanlarsen.github.io/gas/gas/index.html"
 

@@ -122,6 +122,8 @@
 <span id="116">116</span>
 <span id="117">117</span>
 <span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Gas</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::candidate::Candidate</span>;
 
@@ -130,6 +132,8 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crossover::Crossover</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fitness::FitnessConfig</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mutation::Mutation</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
@@ -150,7 +154,7 @@
 <span class="doccomment">/// every generation:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * `rng`: pass [`Rando::new()`]</span>
-<span class="doccomment">/// * `score_weights`: pass [`Gas.fitness.weights()`]</span>
+<span class="doccomment">/// * `score_weights`: pass [`FitnessConfig::weights()`] from [`Gas::fitness`]</span>
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span>, <span class="kw">const</span> <span class="ident">NSYMS</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">Gas</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">NSYMS</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generation</span>(

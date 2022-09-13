@@ -295,6 +295,10 @@ This library was designed to be used in a multi-population network.  Some effort
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">tournaments</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::gas::cycle::CycleProgress</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::gas::Gas</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
 <span class="kw">use</span> <span class="ident">candidate::Candidate</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
 <span class="kw">use</span> <span class="ident">constraints::Constraint</span>;
@@ -304,10 +308,6 @@ This library was designed to be used in a multi-population network.  Some effort
 <span class="kw">use</span> <span class="ident">fitness::FitnessFunction</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
 <span class="kw">use</span> <span class="ident">game::Game</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident">gas::cycle::CycleProgress</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident">gas::Gas</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
 <span class="kw">use</span> <span class="ident">mutation::Mutation</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>

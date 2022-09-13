@@ -7,6 +7,8 @@ use crate::rando::Rando;
 #[cfg(doc)]
 use crate::crossover::Crossover;
 #[cfg(doc)]
+use crate::fitness::FitnessConfig;
+#[cfg(doc)]
 use crate::mutation::Mutation;
 #[cfg(doc)]
 use crate::tournaments::Tournament;
@@ -26,7 +28,7 @@ use crate::tournaments::Tournament;
 /// every generation:
 ///
 /// * `rng`: pass [`Rando::new()`]
-/// * `score_weights`: pass [`Gas.fitness.weights()`]
+/// * `score_weights`: pass [`FitnessConfig::weights()`] from [`Gas::fitness`]
 
 impl<const N: usize, const NSYMS: usize> Gas<N, NSYMS> {
     pub fn generation(

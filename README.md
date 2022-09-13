@@ -1,6 +1,6 @@
 # Genetic Algorithm Scheduler
 
-(This README is extracted from the documentation, which is more authoritative and extensive.   Link TBD).
+(This README is extracted from the [documentation](https://bryanlarsen.github.io/gas/gas/index.html), which is more authoritative and extensive).
 
 This is a multi-dimensional genetic algorithm based optimizer written in rust with multi-threading
 

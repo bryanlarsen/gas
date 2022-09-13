@@ -5,7 +5,7 @@ edition = "2021"
 description = "A Genetic Algorithm optimizer designed for scheduling and similar tasks"
 license = "Apache2"
 repository = "https://github.com/bryanlarsen/gas"
-homepage = "https://github.com/bryanlarsen/gas"
+documentation = "https://bryanlarsen.github.io/gas/gas/index.html"
 
 [lib]
 name = "gas"

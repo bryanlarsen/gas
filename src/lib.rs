@@ -144,6 +144,8 @@ use fitness::FitnessFunction;
 #[cfg(doc)]
 use game::Game;
 #[cfg(doc)]
+use gas::cycle::CycleProgress;
+#[cfg(doc)]
 use gas::Gas;
 #[cfg(doc)]
 use mutation::Mutation;

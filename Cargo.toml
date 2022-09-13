@@ -10,6 +10,10 @@ documentation = "https://bryanlarsen.github.io/gas/gas/index.html"
 [lib]
 name = "gas"
 
+[badges.maintenance]
+status = "actively-developed"
+
+
 [dependencies]
 array-init = "2.0.1"
 mockall_double = "0.3.0"

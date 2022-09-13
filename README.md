@@ -1,3 +1,10 @@
+
+
+  ![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
+  [![CI](https://github.com/bryanlarsen/ga-scheduler/actions/workflows/rustdoc.yml/badge.svg)](https://github.com/bryanlarsen/gas/actions)
+  [![crates-io](https://img.shields.io/crates/v/ga-scheduler.svg)](https://crates.io/crates/ga-scheduler)
+  [![api-docs](https://docs.rs/ga-scheduler/badge.svg)](https://docs.rs/ga-scheduler)
+  
 # Genetic Algorithm Scheduler
 
 (This README is extracted from the [documentation](https://bryanlarsen.github.io/gas/gas/index.html), which is more authoritative and extensive).

@@ -134,6 +134,10 @@ pub mod rando;
 pub mod tournaments;
 
 #[cfg(doc)]
+use crate::gas::cycle::CycleProgress;
+#[cfg(doc)]
+use crate::gas::Gas;
+#[cfg(doc)]
 use candidate::Candidate;
 #[cfg(doc)]
 use constraints::Constraint;
@@ -143,10 +147,6 @@ use crossover::Crossover;
 use fitness::FitnessFunction;
 #[cfg(doc)]
 use game::Game;
-#[cfg(doc)]
-use gas::cycle::CycleProgress;
-#[cfg(doc)]
-use gas::Gas;
 #[cfg(doc)]
 use mutation::Mutation;
 #[cfg(doc)]

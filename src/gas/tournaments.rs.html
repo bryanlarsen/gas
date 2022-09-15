@@ -24,10 +24,18 @@
 <span id="18">18</span>
 <span id="19">19</span>
 <span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
 </pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">double_elimination</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">elo</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">full_season</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">single_elimination</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">double_elimination::DoubleElimination</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">full_season::FullSeason</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">single_elimination::SingleElimination</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::candidate::Candidate</span>;
 

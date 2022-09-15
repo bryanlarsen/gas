@@ -1,6 +1,9 @@
 pub mod full;
 pub mod sample;
 
+pub use full::Full;
+pub use sample::Sample;
+
 use crate::candidate::Candidate;
 
 #[mockall_double::double]

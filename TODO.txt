@@ -1,5 +1,6 @@
-- parameters to [cycle] should be in a structure?
 - network topology
-- better tournament types
 - replace more gen_range with uniform_iter
-- use fitness weights
+- use fitness weights in all games
+- unpack elo scores
+- make some fitness traits optional
+- create & use weighted random numbers for choosing locus & gene

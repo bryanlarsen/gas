@@ -2,6 +2,10 @@ pub mod mix;
 pub mod null;
 pub mod splice;
 
+pub use mix::Mix;
+pub use null::Null;
+pub use splice::Splice;
+
 use crate::chromosone::Gene;
 
 #[mockall_double::double]

@@ -2,6 +2,10 @@ pub mod mutate;
 pub mod null;
 pub mod rotate;
 
+pub use mutate::Mutate;
+pub use null::Null;
+pub use rotate::Rotate;
+
 use crate::chromosone::Gene;
 
 #[mockall_double::double]

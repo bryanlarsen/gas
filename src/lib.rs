@@ -61,7 +61,91 @@ early by setting the [CycleProgress::sigint] flag. When a [Gas::cycle] stops TBD
 
 # Setup and Configuration
 
-See the "examples/" directory for examples on how to use this library.
+There is a simple full example in examples/schedule and a minimal configuration in the `#[cfg(test)] Gas::dut()`.
+
+## Example
+
+Let's play Mastermind!   We've got 6 colors and 4 positions, so the chromosone type parameters are `<N=4, NSYMS=6>`.
+
+If we were really playing the game, our two fitness functions would be the number of white pegs and number of black pegs.   However, we'll use this example to show why it is advantageous to have a lot of fitness functions.
+
+So instead of having the number of black pegs as the fitness function, we'll return 4 separate fitness functions for each possible black peg, and 6 separate fitness functions for each possible white peg.
+
+Here's our fitness function for the black pegs.   We'll use the delta between the desired and actual as the score.   For delta, 0 is the best score, but GAS optimizes for highest score.   So for the score here we return the negated delta -- zero is the highest negative number.
+
+```
+#
+# use gas::chromosone::Gene;
+#
+# use gas::fitness::{FitnessFunction, FitnessName};
+#
+pub struct Black<const N: usize, const NSYMS: usize> {
+  pub answer: [Gene; N]
+}
+
+impl<const N: usize, const NSYMS: usize> FitnessFunction<N, NSYMS> for Black<N, NSYMS> {
+  fn nscores(&self) -> usize { N }
+
+  fn run(&self, chromosone: &[Gene; N]) -> Vec<f64> {
+    std::iter::zip(chromosone, self.answer).map(|(guess, desired)|
+      -(*guess as f64 - desired as f64).abs()
+    ).collect()
+  }
+}
+
+assert_eq!(Black::<4,6>{answer:[4,3,2,1]}.run(&[4,0,2,0]), vec![0.0, -3.0, 0.0, -1.0]);
+```
+
+For the white scores, we could similarly create a [FitnessFunction] that returns 6 scores, counting each gene and returning how close each count is to the count in the answer.   But there is already a FitnessFunction that does this in the library: [fitness::ColorCount].
+
+Once you have the chromosone and the [`FitnessFunction`] defined, you can configure the optimizer by creating a [Gas] object.
+
+```
+#
+# use gas::chromosone::Gene;
+#
+# use gas::fitness::{FitnessFunction, FitnessName};
+#
+# pub struct Black<const N: usize, const NSYMS: usize> {
+# pub answer: [Gene; N]
+# }
+#
+# impl<const N: usize, const NSYMS: usize> FitnessFunction<N, NSYMS> for Black<N, NSYMS> {
+#  fn nscores(&self) -> usize { N }
+#
+#  fn run(&self, chromosone: &[Gene; N]) -> Vec<f64> {
+#    std::iter::zip(chromosone, self.answer).map(|(guess, desired)|
+#      -(*guess as f64 - desired as f64).abs()
+#    ).collect()
+#  }
+# }
+#
+# use gas::Gas;
+# use gas::fitness::{FitnessConfig, self};
+# use gas::constraints::{ConstraintConfig, self};
+# use gas::game;
+# use gas::mutation::{MutationConfig, self};
+# use gas::tournaments;
+# use gas::crossover::{self, CrossoverConfig};
+
+let gas = Gas {
+  fitness: FitnessConfig::new(vec![
+    Box::new(Black::<4, 6>{answer: [4,3,2,1]}),
+    Box::new(fitness::ColorCount::<4,6>::new(1, vec![0], vec![vec![0],vec![1],vec![1],vec![1],vec![1],vec![0]], &[""], 1.0)),
+  ]),
+  constraints: ConstraintConfig::new(vec![]),
+  cycle_tournament: Box::new(tournaments::SingleElimination::new(game::Full::new())),
+  final_tournament: Box::new(tournaments::FullSeason::new(game::Full::new())),
+  crossovers: CrossoverConfig::new(vec![(1, Box::new(crossover::Null::new()))]),
+  mutations: MutationConfig::new(vec![
+    (1, Box::new(mutation::Null::new())),
+    (1, Box::new(mutation::Mutate::<4, 6>::new(1))),
+    (1, Box::new(mutation::Rotate::<4, 6>::new(1))),
+  ]),
+  taboo_distance: 1,
+  population_size: 10,
+};
+```
 
 ## The Chromosone
 
@@ -99,7 +183,64 @@ There are some constants in the [`Gas::cycle`] function that are used to determi
 
 ### nthreads and the Pool
 
-Once you have a [`Gas`] configured, you can start it via [`Gas::cycle`], or instead you can set up [`Pool`] to run several populations in parallel.
+Once you have a [`Gas`] configured, you can start it via [`Gas::cycle`], or instead you can set up [`Pool`] to run several populations in parallel.  [Gas::cycle] takes a [CycleProgress] as a parameter -- you can monitor the progress of the optimizer by monitoring the [CycleProgress] from a separate thread.
+
+```
+#
+# use gas::chromosone::Gene;
+#
+# use gas::fitness::{FitnessFunction, FitnessName};
+#
+# pub struct Black<const N: usize, const NSYMS: usize> {
+# pub answer: [Gene; N]
+# }
+#
+# impl<const N: usize, const NSYMS: usize> FitnessFunction<N, NSYMS> for Black<N, NSYMS> {
+#  fn nscores(&self) -> usize { N }
+#
+#  fn run(&self, chromosone: &[Gene; N]) -> Vec<f64> {
+#    std::iter::zip(chromosone, self.answer).map(|(guess, desired)|
+#      -(*guess as f64 - desired as f64).abs()
+#    ).collect()
+#  }
+# }
+#
+# use gas::Gas;
+# use gas::fitness::{FitnessConfig, self};
+# use gas::constraints::{ConstraintConfig, self};
+# use gas::game;
+# use gas::mutation::{MutationConfig, self};
+# use gas::tournaments;
+# use gas::crossover::{self, CrossoverConfig};
+#
+# let gas = Gas {
+#  fitness: FitnessConfig::new(vec![
+#    Box::new(Black::<4, 6>{answer: [4,3,2,1]}),
+#    Box::new(fitness::ColorCount::<4,6>::new(1, vec![0; 4], vec![vec![0],vec![1],vec![1],vec![1],vec![1],vec![0]], &[""], 1.0)),
+#  ]),
+#  constraints: ConstraintConfig::new(vec![]),
+#  cycle_tournament: Box::new(tournaments::SingleElimination::new(game::Full::new())),
+#  final_tournament: Box::new(tournaments::FullSeason::new(game::Full::new())),
+#  crossovers: CrossoverConfig::new(vec![(1, Box::new(crossover::Null::new()))]),
+#  mutations: MutationConfig::new(vec![
+#    (1, Box::new(mutation::Null::new())),
+#    (1, Box::new(mutation::Mutate::<4, 6>::new(1))),
+#    (1, Box::new(mutation::Rotate::<4, 6>::new(1))),
+#  ]),
+#  taboo_distance: 1,
+#  population_size: 10,
+# };
+# use std::sync::atomic::AtomicBool;
+# use std::sync::Arc;
+# use gas::gas::cycle::CycleProgress;
+
+let sigint = Arc::new(AtomicBool::new(false));
+let mut progress = CycleProgress::<4, 6>::new(&gas, &sigint);
+let solution = gas.cycle(&mut progress);
+assert_eq!(solution.chromosone, [4,3,2,1]);
+```
+
+
 
 # References
 
@@ -111,7 +252,7 @@ Once you have a [`Gas`] configured, you can start it via [`Gas::cycle`], or inst
 
 ## unwrap
 
-This library makes extensive use of unwrap.  This can be justified by the fact that the data given to it is programmatic and the configuration set at compile time, so theoretically pretty much any error is programmatic rather than usage.   But really it's just because unwrap style programming is easier.   I deliberately always used unwrap rather than an easier form to make cleaning them up easier.
+This library makes extensive use of unwrap.  This can be justified by the fact that the data given to it is programmatic and the configuration set at compile time, so theoretically pretty much any error is programmatic rather than usage.   But really it's just because unwrap style programming is easier.   I do plan on eventually putting in proper error handling, but there are always higher priorities.  I deliberately used unwrap to make searching and replacing them easier.   Although technically there are a lot of vector and array accesses using `[]` that would be safer using `.get()`.
 
 ## further development
 
@@ -133,10 +274,10 @@ pub mod pool;
 pub mod rando;
 pub mod tournaments;
 
+pub use crate::gas::Gas;
+
 #[cfg(doc)]
 use crate::gas::cycle::CycleProgress;
-#[cfg(doc)]
-use crate::gas::Gas;
 #[cfg(doc)]
 use candidate::Candidate;
 #[cfg(doc)]

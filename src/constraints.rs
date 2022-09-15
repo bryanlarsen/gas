@@ -1,6 +1,7 @@
 use crate::chromosone::Gene;
 
 pub mod invalid_position;
+pub use invalid_position::InvalidPosition;
 
 /**
 

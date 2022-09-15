@@ -3,6 +3,10 @@ pub mod elo;
 pub mod full_season;
 pub mod single_elimination;
 
+pub use double_elimination::DoubleElimination;
+pub use full_season::FullSeason;
+pub use single_elimination::SingleElimination;
+
 use crate::candidate::Candidate;
 
 #[mockall_double::double]

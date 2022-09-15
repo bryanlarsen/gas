@@ -5,6 +5,11 @@ pub mod distance;
 pub mod locus_desirability;
 pub mod weighted_count;
 
+pub use color_count::ColorCount;
+pub use distance::Distance;
+pub use locus_desirability::LocusDesirability;
+pub use weighted_count::WeightedCount;
+
 /**
 **  A FitnessFunction returns a set of fitness scores when passed a chromosone.
 **
@@ -25,11 +30,15 @@ pub mod weighted_count;
 pub trait FitnessFunction<const N: usize, const NSYMS: usize> {
     /// returns a vector of floats where bigger numbers are better.   If your fitness function optimizes to 0, remember that 0 is the biggest negative number.  NaN is also a valid score, and means that the score cannot be compared and is considered a tie with any other number.
     fn run(&self, chromosone: &[Gene; N]) -> Vec<f64>;
-    /// provides an [FitnessFunction.nscores] length human readable name for the scores returned
-    fn names(&self) -> Vec<FitnessName>;
+    /// provides an [FitnessFunction.nscores] length human readable name for the scores returned.   Optional, but useful for debugging
+    fn names(&self) -> Vec<FitnessName> {
+        vec![]
+    }
     fn nscores(&self) -> usize;
     /// not all games take weights into account, but some do.  The vector must be [FitnessFunction.nscores] long.  Scores with higher weights are worth `weight` times as much as nominal scores.   Note that the value of the score is irrelevant -- scores are never compared with scores in a different position, scores are only compared with the same score on a different candidate.   The weight signifies how valuable it is that this particular score on one candidate is higher or lower than the same score on a different candidate.
-    fn weights(&self) -> Vec<f64>;
+    fn weights(&self) -> Vec<f64> {
+        vec![1.0; self.nscores()]
+    }
 }
 
 /// FitnessName describes a score.   The full name would be [FitnessName.prefix] + [FitnessName.gene] name + [FitnessName.locus] name

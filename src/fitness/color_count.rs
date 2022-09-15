@@ -15,9 +15,9 @@ Parameters:
 */
 
 pub struct ColorCount<const N: usize, const NSYMS: usize> {
+    pub ncolors: usize,
     pub chromosone_colors: Vec<usize>,
     pub preferences: Vec<Vec<usize>>,
-    pub ncolors: usize,
     pub color_names: &'static [&'static str],
     pub weight: f64,
 }

@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 signal-hook = "0.3.14"
-gas = { path = "../.." , features = ["serde"] }
+gas = { path = "../.." , features = ["serde"], package = "ga-scheduler" }
 serde = "1.0.144"
 serde_json = "1.0.85"
